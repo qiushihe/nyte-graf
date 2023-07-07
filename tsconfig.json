@@ -1,0 +1,19 @@
+{
+  "name": "test",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "outDir": "build",
+    "paths": {
+      "~src/*": ["src/*"]
+    }
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
+  }
+}
