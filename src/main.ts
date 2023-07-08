@@ -1,200 +1,49 @@
-import { Block } from "~src/block";
-import { Pipe } from "~src/pipe";
-import {
-  InputDataSocket,
-  InputSignalSocket,
-  OutputDataSocket,
-  OutputSignalSocket
-} from "~src/socket";
+import { Pipe } from "~nyte-graf-core/pipe";
+import { BlockRegistry } from "~nyte-graf-palette/block-registry";
+import { EntryPointBlock } from "~nyte-graf-palette/core";
+import { ConstantValueBlock } from "~nyte-graf-palette/factory";
+import { ConsoleLogBlock } from "~nyte-graf-palette/log";
+import { AdditionBlock } from "~nyte-graf-palette/math";
+import { DelaySignalBlock, ReplicateSignalBlock } from "~nyte-graf-palette/signal";
 
-class SignalDelayerBlock extends Block {
-  private readonly delay: number;
+const registry = BlockRegistry.getDefaultInstance();
 
-  constructor(delay: number) {
-    super("signal-delayer");
-
-    this.delay = delay;
-
-    this.addInputSignalSocket("input-signal").setInputSignalHandler(
-      this.sendDelayedSignal.bind(this)
-    );
-
-    this.addOutputSignalSocket("output-signal");
-  }
-
-  getInputSocket(): InputSignalSocket {
-    return this.getInputSignalSocket("input-signal");
-  }
-
-  getOutputSocket(): OutputSignalSocket {
-    return this.getOutputSignalSocket("output-signal");
-  }
-
-  private sendDelayedSignal() {
-    setTimeout(() => {
-      this.getOutputSignalSocket("output-signal").sendSignal();
-    }, this.delay);
-  }
-}
-
-class SignalReplicatorBlock extends Block {
-  private readonly replicaCount: number;
-
-  constructor(replicaCount: number) {
-    super("signal-replicator");
-
-    this.replicaCount = replicaCount;
-
-    this.addInputSignalSocket("input-signal").setInputSignalHandler(
-      this.sendReplicatedSignals.bind(this)
-    );
-
-    this.getReplicaIndices().forEach((index) => {
-      this.addOutputSignalSocket(this.getReplicaSignalId(index));
-    });
-  }
-
-  getInputSocket(): InputSignalSocket {
-    return this.getInputSignalSocket("input-signal");
-  }
-
-  getOutputSocket(index: number): OutputSignalSocket {
-    return this.getOutputSignalSocket(this.getReplicaSignalId(index));
-  }
-
-  private sendReplicatedSignals() {
-    this.getReplicaIndices().forEach((index) => {
-      this.getOutputSignalSocket(this.getReplicaSignalId(index)).sendSignal();
-    });
-  }
-
-  private getReplicaIndices(): number[] {
-    return [...Array(this.replicaCount).keys()];
-  }
-
-  private getReplicaSignalId(index: number): string {
-    return `replica-output-signal-${index}`;
-  }
-}
-
-class EntryPointBlock extends Block {
-  constructor() {
-    super("entry-point");
-    this.addOutputSignalSocket("output-signal");
-  }
-
-  getOutputSocket(): OutputSignalSocket {
-    return this.getOutputSignalSocket("output-signal");
-  }
-
-  start() {
-    this.getOutputSignalSocket("output-signal").sendSignal();
-  }
-}
-
-class ConstantBlock<TData> extends Block {
-  value?: any;
-
-  constructor(value?: any) {
-    super("constant");
-
-    this.value = value;
-
-    this.addOutputDataSocket<TData>("output-socket").setOutputDataGetter(
-      this.getConstantValue.bind(this)
-    );
-  }
-
-  getOutputSocket(): OutputDataSocket<TData> {
-    return this.getOutputDataSocket("output-socket");
-  }
-
-  private getConstantValue(): any {
-    return this.value;
-  }
-}
-
-class AdditionBlock extends Block {
-  constructor() {
-    super("addition");
-
-    this.addInputDataSocket<number>("input-a");
-
-    this.addInputDataSocket<number>("input-b");
-
-    this.addOutputDataSocket<number>("output-sum").setOutputDataGetter(this.getSum.bind(this));
-  }
-
-  getInputASocket(): InputDataSocket<number> {
-    return this.getInputDataSocket<number>("input-a");
-  }
-
-  getInputBSocket(): InputDataSocket<number> {
-    return this.getInputDataSocket<number>("input-b");
-  }
-
-  getOutputSumSocket(): OutputDataSocket<number> {
-    return this.getOutputDataSocket<number>("output-sum");
-  }
-
-  private getSum(): number {
-    return (
-      this.getInputDataSocket<number>("input-a").getData() +
-      this.getInputDataSocket<number>("input-b").getData()
-    );
-  }
-}
-
-class ConsoleLogBlock extends Block {
-  constructor() {
-    super("console-log");
-
-    this.addInputSignalSocket("input-signal").setInputSignalHandler(
-      this.logDataToConsole.bind(this)
-    );
-
-    this.addInputDataSocket("input-data");
-  }
-
-  getSignalSocket(): InputSignalSocket {
-    return this.getInputSignalSocket("input-signal");
-  }
-
-  getDataSocket(): InputDataSocket<any> {
-    return this.getInputDataSocket("input-data");
-  }
-
-  private logDataToConsole() {
-    console.log(`[ConsoleLogBlock]`, this.getInputDataSocket<any>("input-data").getData());
-  }
-}
+registry.registerBlock("signal/delay", DelaySignalBlock);
+registry.registerBlock("signal/replicate", ReplicateSignalBlock);
+registry.registerBlock("core/entry", EntryPointBlock);
+registry.registerBlock("factory/constant", ConstantValueBlock);
+registry.registerBlock("math/add", AdditionBlock);
+registry.registerBlock("log/console", ConsoleLogBlock);
 
 const main = async () => {
-  const constant = new ConstantBlock("fortyTwo");
-  const consoleLog1 = new ConsoleLogBlock();
-  new Pipe(constant.getOutputSocket(), consoleLog1.getDataSocket());
+  const constant = registry.makeBlock<ConstantValueBlock<string>>("factory/constant");
+  constant.setConstantValue("fortyTwo");
+  const consoleLog1 = registry.makeBlock<ConsoleLogBlock>("log/console");
+  Pipe.connect(constant.getOutputSocket(), consoleLog1.getDataSocket());
 
-  const constantTen = new ConstantBlock(10);
-  const constantThirtyTwo = new ConstantBlock(32);
-  const addition = new AdditionBlock();
-  const consoleLog2 = new ConsoleLogBlock();
-  new Pipe(constantTen.getOutputSocket(), addition.getInputASocket());
-  new Pipe(constantThirtyTwo.getOutputSocket(), addition.getInputBSocket());
-  new Pipe(addition.getOutputSumSocket(), consoleLog2.getDataSocket());
+  const constantTen = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
+  constantTen.setConstantValue(10);
+  const constantThirtyTwo = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
+  constantThirtyTwo.setConstantValue(32);
+  const addition = registry.makeBlock<AdditionBlock>("math/add");
+  const consoleLog2 = registry.makeBlock<ConsoleLogBlock>("log/console");
+  Pipe.connect(constantTen.getOutputSocket(), addition.getInputASocket());
+  Pipe.connect(constantThirtyTwo.getOutputSocket(), addition.getInputBSocket());
+  Pipe.connect(addition.getOutputSumSocket(), consoleLog2.getDataSocket());
 
-  const entry = new EntryPointBlock();
-  const delayer = new SignalDelayerBlock(2000);
-  const replicator = new SignalReplicatorBlock(2);
-  new Pipe(entry.getOutputSocket(), replicator.getInputSocket());
-  new Pipe(replicator.getOutputSocket(0), delayer.getInputSocket());
-  new Pipe(delayer.getOutputSocket(), consoleLog1.getSignalSocket());
-  new Pipe(replicator.getOutputSocket(1), consoleLog2.getSignalSocket());
-  entry.start();
+  const start = registry.makeBlock<EntryPointBlock>("core/entry");
+  const delayer = registry.makeBlock<DelaySignalBlock>("signal/delay");
+  delayer.setDelay(2000);
+  const replicator = registry.makeBlock<ReplicateSignalBlock>("signal/replicate");
+  replicator.setReplicasCount(2);
+  Pipe.connect(start.getOutputSocket(), replicator.getInputSocket());
+  Pipe.connect(replicator.getOutputSocket(0), delayer.getInputSocket());
+  Pipe.connect(delayer.getOutputSocket(), consoleLog1.getSignalSocket());
+  Pipe.connect(replicator.getOutputSocket(1), consoleLog2.getSignalSocket());
+  start.sendSignal();
 
   // Use Ctl-C to quit.
-  await new Promise<void>(() => {
-    setInterval(() => {}, 1000);
-  });
+  await new Promise<void>(() => setInterval(() => {}, 1000));
 };
 
 // Export an empty object ...

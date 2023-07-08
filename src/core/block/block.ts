@@ -1,26 +1,26 @@
 import {
-  IInputSocket,
   InputDataSocket,
   InputSignalSocket,
-  IOutputSocket,
   OutputDataSocket,
   OutputSignalSocket
-} from "~src/socket";
+} from "~nyte-graf-core/socket";
+import { IInputSocket, IOutputSocket } from "~nyte-graf-core/type";
 
 export abstract class Block {
-  private readonly id: string;
   private readonly inputSignalSockets: Record<string, IInputSocket>;
   private readonly outputSignalSockets: Record<string, IOutputSocket>;
   private readonly inputDataSockets: Record<string, IInputSocket>;
   private readonly outputDataSockets: Record<string, IOutputSocket>;
 
-  protected constructor(id: string) {
-    this.id = id;
+  public constructor() {
     this.inputSignalSockets = {};
     this.outputSignalSockets = {};
     this.inputDataSockets = {};
     this.outputDataSockets = {};
+    this.initialize();
   }
+
+  protected initialize(): void {}
 
   protected addInputSignalSocket(id: string): InputSignalSocket {
     if (this.inputSignalSockets[id]) {
@@ -37,6 +37,10 @@ export abstract class Block {
     } else {
       return this.inputSignalSockets[id] as InputSignalSocket;
     }
+  }
+
+  protected getInputSignalSockets(): InputSignalSocket[] {
+    return Object.values(this.inputSignalSockets) as InputSignalSocket[];
   }
 
   protected addOutputSignalSocket(id: string): OutputSignalSocket {
@@ -56,6 +60,10 @@ export abstract class Block {
     }
   }
 
+  protected getOutputSignalSockets(): OutputSignalSocket[] {
+    return Object.values(this.outputSignalSockets) as OutputSignalSocket[];
+  }
+
   protected addInputDataSocket<TData>(id: string): InputDataSocket<TData> {
     if (this.inputDataSockets[id]) {
       throw new Error(`Input data socket "${id}" already exist`);
@@ -73,6 +81,10 @@ export abstract class Block {
     }
   }
 
+  protected getInputDataSockets(): InputDataSocket<unknown>[] {
+    return Object.values(this.inputDataSockets) as InputDataSocket<unknown>[];
+  }
+
   protected addOutputDataSocket<TData>(id: string): OutputDataSocket<TData> {
     if (this.outputDataSockets[id]) {
       throw new Error(`Output data socket "${id}" already exist`);
@@ -88,5 +100,9 @@ export abstract class Block {
     } else {
       return this.outputDataSockets[id] as OutputDataSocket<TData>;
     }
+  }
+
+  protected getOutputDataSockets(): OutputDataSocket<unknown>[] {
+    return Object.values(this.outputDataSockets) as OutputDataSocket<unknown>[];
   }
 }

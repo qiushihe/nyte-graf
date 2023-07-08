@@ -1,4 +1,4 @@
-import { Pipe } from "~src/pipe";
+import { Pipe } from "~nyte-graf-core/pipe";
 
 export interface IInputSocket {
   attachInputPipe(pipe: Pipe): void;

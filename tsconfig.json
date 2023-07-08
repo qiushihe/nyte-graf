@@ -10,7 +10,8 @@
     "baseUrl": ".",
     "outDir": "build",
     "paths": {
-      "~src/*": ["src/*"]
+      "~nyte-graf-core/*": ["src/core/*"],
+      "~nyte-graf-palette/*": ["src/palette/*"]
     }
   },
   "tsc-alias": {

@@ -9,8 +9,10 @@
   ],
   "rules": {
     "prettier/prettier": "error",
+    "@typescript-eslint/explicit-member-accessibility": "error",
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-empty-function": "off"
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/ban-ts-comment": "off"
   },
   "overrides": [
     {

@@ -1,21 +1,20 @@
-import { Pipe } from "~src/pipe";
-
-import { IOutputSocket } from "./socket.type";
+import { Pipe } from "~nyte-graf-core/pipe";
+import { IOutputSocket } from "~nyte-graf-core/type";
 
 export class OutputSignalSocket implements IOutputSocket {
-  pipe?: Pipe;
+  public pipe?: Pipe;
 
-  attachOutputPipe(pipe: Pipe): void {
+  public attachOutputPipe(pipe: Pipe): void {
     this.pipe = pipe;
   }
 
-  sendSignal() {
+  public sendSignal() {
     setTimeout(() => {
       this.pipe?.destination.onReceiveInputSignal();
     }, 1);
   }
 
-  onRequestOutputData(): any {
+  public onRequestOutputData(): any {
     throw new Error("Unable to handle data request on signal socket");
   }
 }
