@@ -11,7 +11,7 @@
     "outDir": "build",
     "paths": {
       "~nyte-graf-core/*": ["src/core/*"],
-      "~nyte-graf-palette/*": ["src/palette/*"]
+      "~nyte-graf-block/*": ["src/block/*"]
     }
   },
   "tsc-alias": {

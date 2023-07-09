@@ -2,13 +2,13 @@ import { Class } from "type-fest";
 
 import { Block } from "~nyte-graf-core/block";
 
-export class BlockRegistry {
-  private static defaultInstance: BlockRegistry;
+export class Registry {
+  private static defaultInstance: Registry;
 
-  public static getDefaultInstance(): BlockRegistry {
-    if (!BlockRegistry.defaultInstance) {
-      BlockRegistry.defaultInstance = new BlockRegistry();
-      return BlockRegistry.defaultInstance;
+  public static getDefaultInstance(): Registry {
+    if (!Registry.defaultInstance) {
+      Registry.defaultInstance = new Registry();
+      return Registry.defaultInstance;
     }
   }
 

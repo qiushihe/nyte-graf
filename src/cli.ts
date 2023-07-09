@@ -1,12 +1,12 @@
+import { EntryPointBlock } from "~nyte-graf-block/core";
+import { ConstantValueBlock } from "~nyte-graf-block/factory";
+import { ConsoleLogBlock } from "~nyte-graf-block/log";
+import { AdditionBlock } from "~nyte-graf-block/math";
+import { Registry } from "~nyte-graf-block/registry";
+import { DelaySignalBlock, ReplicateSignalBlock } from "~nyte-graf-block/signal";
 import { Pipe } from "~nyte-graf-core/pipe";
-import { BlockRegistry } from "~nyte-graf-palette/block-registry";
-import { EntryPointBlock } from "~nyte-graf-palette/core";
-import { ConstantValueBlock } from "~nyte-graf-palette/factory";
-import { ConsoleLogBlock } from "~nyte-graf-palette/log";
-import { AdditionBlock } from "~nyte-graf-palette/math";
-import { DelaySignalBlock, ReplicateSignalBlock } from "~nyte-graf-palette/signal";
 
-const registry = BlockRegistry.getDefaultInstance();
+const registry = Registry.getDefaultInstance();
 
 registry.registerBlock("signal/delay", DelaySignalBlock);
 registry.registerBlock("signal/replicate", ReplicateSignalBlock);
