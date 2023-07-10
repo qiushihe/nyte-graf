@@ -7,7 +7,7 @@ import {
   OutputSignalSocket
 } from "~nyte-graf-core/socket";
 
-import { BlockAttribute } from "./block.type";
+import { BlockAttribute, BlockAttributeValue } from "./block.type";
 
 export abstract class Block {
   private readonly attributes: Record<string, BlockAttribute>;
@@ -36,7 +36,7 @@ export abstract class Block {
     };
   }
 
-  public setAttribute<TType extends string | number | boolean>(name: string, value: TType) {
+  public setAttribute<TType extends BlockAttributeValue>(name: string, value: TType) {
     const attribute = this.attributes[name] || null;
     if (attribute) {
       attribute.value = this.serializeAttributeValue(value);
@@ -45,7 +45,7 @@ export abstract class Block {
     }
   }
 
-  public getAttribute<TType extends string | number | boolean>(name: string): TType | null {
+  public getAttribute<TType extends BlockAttributeValue>(name: string): TType | null {
     const attribute = this.attributes[name] || null;
     if (attribute) {
       const attributeValue = attribute.value;
@@ -62,6 +62,13 @@ export abstract class Block {
     } else {
       return null;
     }
+  }
+
+  public getAttributes(): Record<string, unknown> {
+    return Object.keys(this.attributes).reduce(
+      (acc, name) => ({ ...acc, [name]: this.getAttribute(name) }),
+      {} as Record<string, unknown>
+    );
   }
 
   private serializeAttributeValue(value: unknown): string | null {

@@ -5,7 +5,6 @@ import { AdditionBlock } from "~nyte-graf-block/math";
 import { Registry } from "~nyte-graf-block/registry";
 import { DelaySignalBlock, ReplicateSignalBlock } from "~nyte-graf-block/signal";
 import { Graph } from "~nyte-graf-core/graph";
-import { Pipe } from "~nyte-graf-core/pipe";
 
 const registry = Registry.getDefaultInstance();
 
@@ -17,55 +16,38 @@ registry.registerBlock("math/add", AdditionBlock);
 registry.registerBlock("log/console", ConsoleLogBlock);
 
 const main = async () => {
-  const constant = registry.makeBlock<ConstantValueBlock<string>>("factory/constant");
-  constant.setAttribute("Value", "fortyTwo");
-  const consoleLog1 = registry.makeBlock<ConsoleLogBlock>("log/console");
-  Pipe.connect(
-    constant.getOutputDataSocket("output-socket"),
-    consoleLog1.getInputDataSocket("input-data")
-  );
+  const graph = new Graph(registry);
 
-  const constantTen = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
-  constantTen.setAttribute("Value", 10);
-  const constantThirtyTwo = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
-  constantThirtyTwo.setAttribute("Value", 32);
-  const addition = registry.makeBlock<AdditionBlock>("math/add");
-  const consoleLog2 = registry.makeBlock<ConsoleLogBlock>("log/console");
-  Pipe.connect(
-    constantTen.getOutputDataSocket("output-socket"),
-    addition.getInputDataSocket<number>("input-a")
-  );
-  Pipe.connect(
-    constantThirtyTwo.getOutputDataSocket("output-socket"),
-    addition.getInputDataSocket<number>("input-b")
-  );
-  Pipe.connect(
-    addition.getOutputDataSocket<number>("output-sum"),
-    consoleLog2.getInputDataSocket("input-data")
-  );
+  const constant1Id = graph.addBlock("factory/constant", { Value: "fortyTwo" });
+  const consoleLog1Id = graph.addBlock("log/console");
+  graph.addDataConnection(constant1Id, "output-socket", consoleLog1Id, "input-data");
 
-  const start = registry.makeBlock<EntryPointBlock>("core/entry");
-  const delayer = registry.makeBlock<DelaySignalBlock>("signal/delay");
-  delayer.setAttribute("Delay", 2000);
-  const replicator = registry.makeBlock<ReplicateSignalBlock>("signal/replicate");
-  replicator.setReplicasCount(2);
-  Pipe.connect(
-    start.getOutputSignalSocket("output-signal"),
-    replicator.getInputSignalSocket("input-signal")
-  );
-  Pipe.connect(
-    replicator.getOutputSignalSocket("replica-output-signal-0"),
-    delayer.getInputSignalSocket("input-signal")
-  );
-  Pipe.connect(
-    delayer.getOutputSignalSocket("output-signal"),
-    consoleLog1.getInputSignalSocket("input-signal")
-  );
-  Pipe.connect(
-    replicator.getOutputSignalSocket("replica-output-signal-1"),
-    consoleLog2.getInputSignalSocket("input-signal")
-  );
-  start.sendSignal();
+  const constant2Id = graph.addBlock("factory/constant", { Value: 10 });
+  const constant3Id = graph.addBlock("factory/constant", { Value: 32 });
+  const additionId = graph.addBlock("math/add");
+  const consoleLog2Id = graph.addBlock("log/console");
+  graph.addDataConnection(constant2Id, "output-socket", additionId, "input-a");
+  graph.addDataConnection(constant3Id, "output-socket", additionId, "input-b");
+  graph.addDataConnection(additionId, "output-sum", consoleLog2Id, "input-data");
+
+  const startId = graph.addBlock("core/entry");
+  graph.setEntryBlockInstanceId(startId);
+
+  const replicateId = graph.addBlock("signal/replicate", { Count: 2 });
+  const delayId = graph.addBlock("signal/delay", { Delay: 2000 });
+  graph.addSignalConnection(startId, "output-signal", replicateId, "input-signal");
+  graph.addSignalConnection(replicateId, "replica-output-signal-0", consoleLog1Id, "input-signal");
+  graph.addSignalConnection(replicateId, "replica-output-signal-1", delayId, "input-signal");
+  graph.addSignalConnection(delayId, "output-signal", consoleLog2Id, "input-signal");
+
+  const serializedGraph = graph.serialize();
+  console.log("=========");
+  console.log(serializedGraph);
+  console.log("=========");
+
+  const deserializedGraph = new Graph(registry);
+  deserializedGraph.deserialize(serializedGraph);
+  deserializedGraph.sendEntrySignal();
 
   // Use Ctl-C to quit.
   await new Promise<void>(() => setInterval(() => {}, 1000));

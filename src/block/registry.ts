@@ -12,25 +12,25 @@ export class Registry {
     }
   }
 
-  private readonly blockClassById: Map<string, Class<Block>>;
+  private readonly blockClassByName: Map<string, Class<Block>>;
 
   protected constructor() {
-    this.blockClassById = new Map<string, Class<Block>>();
+    this.blockClassByName = new Map<string, Class<Block>>();
   }
 
-  public registerBlock<TBlock extends Block>(id: string, blockClass: Class<TBlock>): void {
-    if (this.blockClassById.has(id)) {
-      throw new Error(`Block already registered: ${id}`);
+  public registerBlock<TBlock extends Block>(name: string, blockClass: Class<TBlock>): void {
+    if (this.blockClassByName.has(name)) {
+      throw new Error(`Block already registered: ${name}`);
     } else {
-      this.blockClassById.set(id, blockClass);
+      this.blockClassByName.set(name, blockClass);
     }
   }
 
-  public makeBlock<TBlock extends Block = Block>(id: string): TBlock {
-    if (!this.blockClassById.has(id)) {
-      throw new Error(`Block not registered: ${id}`);
+  public makeBlock<TBlock extends Block = Block>(name: string): TBlock {
+    if (!this.blockClassByName.has(name)) {
+      throw new Error(`Block not registered: ${name}`);
     } else {
-      const BlockClass = this.blockClassById.get(id);
+      const BlockClass = this.blockClassByName.get(name);
       return new BlockClass() as TBlock;
     }
   }
