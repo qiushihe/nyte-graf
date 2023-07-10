@@ -1,18 +1,23 @@
 import {
+  IInputSocket,
   InputDataSocket,
   InputSignalSocket,
+  IOutputSocket,
   OutputDataSocket,
   OutputSignalSocket
 } from "~nyte-graf-core/socket";
-import { IInputSocket, IOutputSocket } from "~nyte-graf-core/type";
+
+import { BlockAttribute } from "./block.type";
 
 export abstract class Block {
+  private readonly attributes: Record<string, BlockAttribute>;
   private readonly inputSignalSockets: Record<string, IInputSocket>;
   private readonly outputSignalSockets: Record<string, IOutputSocket>;
   private readonly inputDataSockets: Record<string, IInputSocket>;
   private readonly outputDataSockets: Record<string, IOutputSocket>;
 
   public constructor() {
+    this.attributes = {};
     this.inputSignalSockets = {};
     this.outputSignalSockets = {};
     this.inputDataSockets = {};
@@ -21,6 +26,51 @@ export abstract class Block {
   }
 
   protected initialize(): void {}
+
+  protected addAttribute(name: string, description: string, defaultValue: any) {
+    this.attributes[name] = {
+      name,
+      description,
+      defaultValue: this.serializeAttributeValue(defaultValue),
+      value: this.serializeAttributeValue(null)
+    };
+  }
+
+  public setAttribute<TType extends string | number | boolean>(name: string, value: TType) {
+    const attribute = this.attributes[name] || null;
+    if (attribute) {
+      attribute.value = this.serializeAttributeValue(value);
+    } else {
+      throw new Error(`Missing attribute ${name}`);
+    }
+  }
+
+  public getAttribute<TType extends string | number | boolean>(name: string): TType | null {
+    const attribute = this.attributes[name] || null;
+    if (attribute) {
+      const attributeValue = attribute.value;
+      if (attributeValue === null || attributeValue === undefined) {
+        const attributeDefaultValue = attribute.defaultValue;
+        if (attributeDefaultValue === null || attributeDefaultValue === undefined) {
+          return null;
+        } else {
+          return this.deserializeAttributeValue(attributeDefaultValue) as TType;
+        }
+      } else {
+        return this.deserializeAttributeValue(attributeValue) as TType;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  private serializeAttributeValue(value: unknown): string | null {
+    return value === null || value === undefined ? JSON.stringify(null) : JSON.stringify(value);
+  }
+
+  private deserializeAttributeValue(value: string | null) {
+    return value === null || value === undefined ? null : JSON.parse(value);
+  }
 
   protected addInputSignalSocket(id: string): InputSignalSocket {
     if (this.inputSignalSockets[id]) {
@@ -31,7 +81,7 @@ export abstract class Block {
     }
   }
 
-  protected getInputSignalSocket(id: string): InputSignalSocket {
+  public getInputSignalSocket(id: string): InputSignalSocket {
     if (!this.inputSignalSockets[id]) {
       throw new Error(`Input signal socket "${id}" does not exist`);
     } else {
@@ -39,7 +89,7 @@ export abstract class Block {
     }
   }
 
-  protected getInputSignalSockets(): InputSignalSocket[] {
+  public getInputSignalSockets(): InputSignalSocket[] {
     return Object.values(this.inputSignalSockets) as InputSignalSocket[];
   }
 
@@ -52,7 +102,7 @@ export abstract class Block {
     }
   }
 
-  protected getOutputSignalSocket(id: string): OutputSignalSocket {
+  public getOutputSignalSocket(id: string): OutputSignalSocket {
     if (!this.outputSignalSockets[id]) {
       throw new Error(`Output signal socket "${id}" does not exist`);
     } else {
@@ -60,7 +110,7 @@ export abstract class Block {
     }
   }
 
-  protected getOutputSignalSockets(): OutputSignalSocket[] {
+  public getOutputSignalSockets(): OutputSignalSocket[] {
     return Object.values(this.outputSignalSockets) as OutputSignalSocket[];
   }
 
@@ -73,7 +123,7 @@ export abstract class Block {
     }
   }
 
-  protected getInputDataSocket<TData>(id: string): InputDataSocket<TData> {
+  public getInputDataSocket<TData>(id: string): InputDataSocket<TData> {
     if (!this.inputDataSockets[id]) {
       throw new Error(`Input data socket "${id}" does not exist`);
     } else {
@@ -81,7 +131,7 @@ export abstract class Block {
     }
   }
 
-  protected getInputDataSockets(): InputDataSocket<unknown>[] {
+  public getInputDataSockets(): InputDataSocket<unknown>[] {
     return Object.values(this.inputDataSockets) as InputDataSocket<unknown>[];
   }
 
@@ -94,7 +144,7 @@ export abstract class Block {
     }
   }
 
-  protected getOutputDataSocket<TData>(id: string): OutputDataSocket<TData> {
+  public getOutputDataSocket<TData>(id: string): OutputDataSocket<TData> {
     if (!this.outputDataSockets[id]) {
       throw new Error(`Output data socket "${id}" does not exist`);
     } else {
@@ -102,7 +152,7 @@ export abstract class Block {
     }
   }
 
-  protected getOutputDataSockets(): OutputDataSocket<unknown>[] {
+  public getOutputDataSockets(): OutputDataSocket<unknown>[] {
     return Object.values(this.outputDataSockets) as OutputDataSocket<unknown>[];
   }
 }

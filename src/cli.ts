@@ -4,6 +4,7 @@ import { ConsoleLogBlock } from "~nyte-graf-block/log";
 import { AdditionBlock } from "~nyte-graf-block/math";
 import { Registry } from "~nyte-graf-block/registry";
 import { DelaySignalBlock, ReplicateSignalBlock } from "~nyte-graf-block/signal";
+import { Graph } from "~nyte-graf-core/graph";
 import { Pipe } from "~nyte-graf-core/pipe";
 
 const registry = Registry.getDefaultInstance();
@@ -17,29 +18,53 @@ registry.registerBlock("log/console", ConsoleLogBlock);
 
 const main = async () => {
   const constant = registry.makeBlock<ConstantValueBlock<string>>("factory/constant");
-  constant.setConstantValue("fortyTwo");
+  constant.setAttribute("Value", "fortyTwo");
   const consoleLog1 = registry.makeBlock<ConsoleLogBlock>("log/console");
-  Pipe.connect(constant.getOutputSocket(), consoleLog1.getDataSocket());
+  Pipe.connect(
+    constant.getOutputDataSocket("output-socket"),
+    consoleLog1.getInputDataSocket("input-data")
+  );
 
   const constantTen = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
-  constantTen.setConstantValue(10);
+  constantTen.setAttribute("Value", 10);
   const constantThirtyTwo = registry.makeBlock<ConstantValueBlock<number>>("factory/constant");
-  constantThirtyTwo.setConstantValue(32);
+  constantThirtyTwo.setAttribute("Value", 32);
   const addition = registry.makeBlock<AdditionBlock>("math/add");
   const consoleLog2 = registry.makeBlock<ConsoleLogBlock>("log/console");
-  Pipe.connect(constantTen.getOutputSocket(), addition.getInputASocket());
-  Pipe.connect(constantThirtyTwo.getOutputSocket(), addition.getInputBSocket());
-  Pipe.connect(addition.getOutputSumSocket(), consoleLog2.getDataSocket());
+  Pipe.connect(
+    constantTen.getOutputDataSocket("output-socket"),
+    addition.getInputDataSocket<number>("input-a")
+  );
+  Pipe.connect(
+    constantThirtyTwo.getOutputDataSocket("output-socket"),
+    addition.getInputDataSocket<number>("input-b")
+  );
+  Pipe.connect(
+    addition.getOutputDataSocket<number>("output-sum"),
+    consoleLog2.getInputDataSocket("input-data")
+  );
 
   const start = registry.makeBlock<EntryPointBlock>("core/entry");
   const delayer = registry.makeBlock<DelaySignalBlock>("signal/delay");
-  delayer.setDelay(2000);
+  delayer.setAttribute("Delay", 2000);
   const replicator = registry.makeBlock<ReplicateSignalBlock>("signal/replicate");
   replicator.setReplicasCount(2);
-  Pipe.connect(start.getOutputSocket(), replicator.getInputSocket());
-  Pipe.connect(replicator.getOutputSocket(0), delayer.getInputSocket());
-  Pipe.connect(delayer.getOutputSocket(), consoleLog1.getSignalSocket());
-  Pipe.connect(replicator.getOutputSocket(1), consoleLog2.getSignalSocket());
+  Pipe.connect(
+    start.getOutputSignalSocket("output-signal"),
+    replicator.getInputSignalSocket("input-signal")
+  );
+  Pipe.connect(
+    replicator.getOutputSignalSocket("replica-output-signal-0"),
+    delayer.getInputSignalSocket("input-signal")
+  );
+  Pipe.connect(
+    delayer.getOutputSignalSocket("output-signal"),
+    consoleLog1.getInputSignalSocket("input-signal")
+  );
+  Pipe.connect(
+    replicator.getOutputSignalSocket("replica-output-signal-1"),
+    consoleLog2.getInputSignalSocket("input-signal")
+  );
   start.sendSignal();
 
   // Use Ctl-C to quit.

@@ -1,4 +1,4 @@
-import { IInputSocket, IOutputSocket } from "~nyte-graf-core/type";
+import { IInputSocket, IOutputSocket } from "~nyte-graf-core/socket";
 
 export class Pipe {
   public static connect(source: IOutputSocket, destination: IInputSocket): Pipe {

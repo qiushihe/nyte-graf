@@ -1,5 +1,5 @@
 import { Pipe } from "~nyte-graf-core/pipe";
-import { IInputSocket } from "~nyte-graf-core/type";
+import { IInputSocket } from "~nyte-graf-core/socket";
 
 export class InputDataSocket<TData> implements IInputSocket {
   public pipe?: Pipe;

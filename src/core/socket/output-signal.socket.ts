@@ -1,5 +1,5 @@
 import { Pipe } from "~nyte-graf-core/pipe";
-import { IOutputSocket } from "~nyte-graf-core/type";
+import { IOutputSocket } from "~nyte-graf-core/socket";
 
 export class OutputSignalSocket implements IOutputSocket {
   public pipe?: Pipe;
