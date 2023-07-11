@@ -18,35 +18,35 @@ registry.registerBlock("log/console", ConsoleLogBlock);
 const main = async () => {
   const graph = new Graph(registry);
 
-  const constant1Id = graph.addBlock("factory/constant", { Value: "fortyTwo" });
-  const consoleLog1Id = graph.addBlock("log/console");
-  graph.addDataConnection(constant1Id, "output-socket", consoleLog1Id, "input-data");
+  const constant1Id = graph.createBlock("factory/constant", { Value: "fortyTwo" });
+  const log1Id = graph.createBlock("log/console");
+  graph.createDataConnection(constant1Id, "output-socket", log1Id, "input-data");
 
-  const constant2Id = graph.addBlock("factory/constant", { Value: 10 });
-  const constant3Id = graph.addBlock("factory/constant", { Value: 32 });
-  const additionId = graph.addBlock("math/add");
-  const consoleLog2Id = graph.addBlock("log/console");
-  graph.addDataConnection(constant2Id, "output-socket", additionId, "input-a");
-  graph.addDataConnection(constant3Id, "output-socket", additionId, "input-b");
-  graph.addDataConnection(additionId, "output-sum", consoleLog2Id, "input-data");
+  const constant2Id = graph.createBlock("factory/constant", { Value: 10 });
+  const constant3Id = graph.createBlock("factory/constant", { Value: 32 });
+  const additionId = graph.createBlock("math/add");
+  const log2Id = graph.createBlock("log/console");
+  graph.createDataConnection(constant2Id, "output-socket", additionId, "input-a");
+  graph.createDataConnection(constant3Id, "output-socket", additionId, "input-b");
+  graph.createDataConnection(additionId, "output-sum", log2Id, "input-data");
 
-  const startId = graph.addBlock("core/entry");
+  const startId = graph.createBlock("core/entry");
   graph.setEntryBlockInstanceId(startId);
 
-  const replicateId = graph.addBlock("signal/replicate", { Count: 2 });
-  const delayId = graph.addBlock("signal/delay", { Delay: 2000 });
-  graph.addSignalConnection(startId, "output-signal", replicateId, "input-signal");
-  graph.addSignalConnection(replicateId, "replica-output-signal-0", consoleLog1Id, "input-signal");
-  graph.addSignalConnection(replicateId, "replica-output-signal-1", delayId, "input-signal");
-  graph.addSignalConnection(delayId, "output-signal", consoleLog2Id, "input-signal");
+  const replicateId = graph.createBlock("signal/replicate", { Count: 2 });
+  const delayId = graph.createBlock("signal/delay", { Delay: 2000 });
+  graph.createSignalConnection(startId, "output-signal", replicateId, "input-signal");
+  graph.createSignalConnection(replicateId, "replica-output-signal-0", log1Id, "input-signal");
+  graph.createSignalConnection(replicateId, "replica-output-signal-1", delayId, "input-signal");
+  graph.createSignalConnection(delayId, "output-signal", log2Id, "input-signal");
 
-  const serializedGraph = graph.serialize();
+  const serialized = graph.serialize();
   console.log("=========");
-  console.log(serializedGraph);
+  console.log(serialized);
   console.log("=========");
 
   const deserializedGraph = new Graph(registry);
-  deserializedGraph.deserialize(serializedGraph);
+  deserializedGraph.deserialize(serialized);
   deserializedGraph.sendEntrySignal();
 
   // Use Ctl-C to quit.

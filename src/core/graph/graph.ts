@@ -6,7 +6,7 @@ import { Pipe } from "~nyte-graf-core/pipe";
 import { tap } from "~nyte-graf-core/util/fp";
 import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
 
-import { BlockInstance, PipeInstance } from "./graph.type";
+import { BlockInstance, PipeInstance, SerializedGraph } from "./graph.type";
 
 export class Graph {
   private readonly blockRegistry: Registry;
@@ -21,16 +21,18 @@ export class Graph {
     this.entryBlockInstanceId = null;
   }
 
-  public addBlock(name: string, attributes?: Record<string, BlockAttributeValue>): string {
+  public createBlock(name: string, attributes?: Record<string, BlockAttributeValue>): string {
+    return tap<string>((instanceId) => this.addBlock(instanceId, name, attributes))(uuidV4());
+  }
+
+  private addBlock(id: string, name: string, attributes?: Record<string, unknown>) {
     const block = this.blockRegistry.makeBlock(name);
 
     Object.entries(attributes || {}).forEach(([key, value]) => {
-      block.setAttribute(key, value);
+      block.setAttribute(key, value as BlockAttributeValue);
     });
 
-    return tap<string>((instanceId) => {
-      this.blockInstances.push({ id: instanceId, name, block });
-    })(uuidV4());
+    this.blockInstances.push({ id, name, block });
   }
 
   public getBlock<TBlock extends Block>(instanceId: string): TBlock {
@@ -60,31 +62,36 @@ export class Graph {
     }
   }
 
-  public addSignalConnection(
+  public createSignalConnection(
     fromInstanceId: string,
     fromSocketId: string,
     toInstanceId: string,
     toSocketId: string
   ): string {
-    return this.addConnection("signal", fromInstanceId, fromSocketId, toInstanceId, toSocketId);
+    return tap<string>((uuid) =>
+      this.addConnection(uuid, "signal", fromInstanceId, fromSocketId, toInstanceId, toSocketId)
+    )(uuidV4());
   }
 
-  public addDataConnection(
+  public createDataConnection(
     fromInstanceId: string,
     fromSocketId: string,
     toInstanceId: string,
     toSocketId: string
   ): string {
-    return this.addConnection("data", fromInstanceId, fromSocketId, toInstanceId, toSocketId);
+    return tap<string>((uuid) =>
+      this.addConnection(uuid, "data", fromInstanceId, fromSocketId, toInstanceId, toSocketId)
+    )(uuidV4());
   }
 
   private addConnection(
-    transport: "signal" | "data",
+    id: string,
+    transport: string,
     fromInstanceId: string,
     fromSocketId: string,
     toInstanceId: string,
     toSocketId: string
-  ): string {
+  ) {
     const fromBlockInstance =
       this.blockInstances.find((instance) => instance.id === fromInstanceId) || null;
     if (!fromBlockInstance) {
@@ -112,94 +119,56 @@ export class Graph {
       throw new Error(`Unknown transport: ${transport}`);
     }
 
-    return tap<string>((instanceId) => {
-      this.pipeInstances.push({
-        id: instanceId,
-        transport,
-        fromInstanceId,
-        fromSocketId,
-        toInstanceId,
-        toSocketId,
-        pipe
-      });
-    })(uuidV4());
+    this.pipeInstances.push({
+      id,
+      transport,
+      fromInstanceId,
+      fromSocketId,
+      toInstanceId,
+      toSocketId,
+      pipe
+    });
   }
 
   public serialize(): string {
-    return JSON.stringify(
-      {
-        entryBlockInstanceId: this.entryBlockInstanceId,
-        blocks: this.blockInstances.map((instance) => ({
-          id: instance.id,
-          name: instance.name,
-          attributes: instance.block.getAttributes()
-        })),
-        connections: this.pipeInstances.map((instance) => ({
-          id: instance.id,
-          transport: instance.transport,
-          fromInstanceId: instance.fromInstanceId,
-          fromSocketId: instance.fromSocketId,
-          toInstanceId: instance.toInstanceId,
-          toSocketId: instance.toSocketId
-        }))
-      },
-      null,
-      2
-    );
+    const serializedGraph: SerializedGraph = {
+      entryBlockInstanceId: this.entryBlockInstanceId || null,
+      blocks: this.blockInstances.map((instance) => ({
+        id: instance.id,
+        name: instance.name,
+        attributes: instance.block.getAttributes()
+      })),
+      connections: this.pipeInstances.map((instance) => ({
+        id: instance.id,
+        transport: instance.transport,
+        fromInstanceId: instance.fromInstanceId,
+        fromSocketId: instance.fromSocketId,
+        toInstanceId: instance.toInstanceId,
+        toSocketId: instance.toSocketId
+      }))
+    };
+
+    return JSON.stringify(serializedGraph, null, 2);
   }
 
   public deserialize(serialized: string) {
-    const json = JSON.parse(serialized);
+    const serializedGraph = JSON.parse(serialized) as SerializedGraph;
 
-    this.entryBlockInstanceId = json.entryBlockInstanceId;
+    this.entryBlockInstanceId = serializedGraph.entryBlockInstanceId || null;
 
-    (json.blocks || []).forEach((data) => {
-      const block = this.blockRegistry.makeBlock(data.name);
-
-      Object.entries(data.attributes || {}).forEach(([key, value]) => {
-        block.setAttribute(key, value as any);
-      });
-
-      this.blockInstances.push({ id: data.id, name: data.name, block });
+    (serializedGraph.blocks || []).forEach((data) => {
+      this.addBlock(data.id, data.name, data.attributes);
     });
 
-    (json.connections || []).forEach((data) => {
-      const fromBlockInstance =
-        this.blockInstances.find((instance) => instance.id === data.fromInstanceId) || null;
-      if (!fromBlockInstance) {
-        throw new Error(`Block instance (from) not found: ${data.fromInstanceId}`);
-      }
-
-      const toBlockInstance =
-        this.blockInstances.find((instance) => instance.id === data.toInstanceId) || null;
-      if (!toBlockInstance) {
-        throw new Error(`Block instance (to) not found: ${data.toInstanceId}`);
-      }
-
-      let pipe: Pipe;
-      if (data.transport === "signal") {
-        pipe = Pipe.connect(
-          fromBlockInstance.block.getOutputSignalSocket(data.fromSocketId),
-          toBlockInstance.block.getInputSignalSocket(data.toSocketId)
-        );
-      } else if (data.transport === "data") {
-        pipe = Pipe.connect(
-          fromBlockInstance.block.getOutputDataSocket(data.fromSocketId),
-          toBlockInstance.block.getInputDataSocket(data.toSocketId)
-        );
-      } else {
-        throw new Error(`Unknown transport: ${data.transport}`);
-      }
-
-      this.pipeInstances.push({
-        id: data.id,
-        transport: data.transport,
-        fromInstanceId: data.fromInstanceId,
-        fromSocketId: data.fromSocketId,
-        toInstanceId: data.toInstanceId,
-        toSocketId: data.toSocketId,
-        pipe
-      });
+    (serializedGraph.connections || []).forEach((data) => {
+      this.addConnection(
+        data.id,
+        data.transport,
+        data.fromInstanceId,
+        data.fromSocketId,
+        data.toInstanceId,
+        data.toSocketId
+      );
     });
   }
 }
