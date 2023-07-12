@@ -1,62 +1,7 @@
 import debounce from "lodash/fp/debounce";
 
-import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
-
-type CanvasLayer = { id: string };
-
-type CanvasShapeRectangle = {
-  type: "rectangle";
-  posX: number;
-  posY: number;
-  width: number;
-  height: number;
-};
-
-type CanvasShapeCircle = { type: "circle"; posX: number; posY: number; radius: number };
-
-type CanvasShapePolyLine = {
-  type: "poly-line";
-  points: { posX: number; posY: number }[];
-};
-
-type CanvasShape = { id: string; layerId: string } & (
-  | CanvasShapeRectangle
-  | CanvasShapeCircle
-  | CanvasShapePolyLine
-);
-
-type CanvasState = {
-  layerOrder: string[];
-  layers: CanvasLayer[];
-  shapes: CanvasShape[];
-};
-
-const canvasStateRenderer = (canvas: HTMLCanvasElement) => (canvasState: CanvasState) => {
-  const ctx = canvas.getContext("2d");
-
-  console.log(canvasState);
-
-  canvasState.shapes.forEach((shape) => {
-    // ctx.scale(1, 1);
-    // ctx.translate(100, 100);
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 1;
-
-    if (shape.type === "rectangle") {
-      ctx.strokeRect(shape.posX, shape.posY, shape.width, shape.height);
-    } else if (shape.type === "circle") {
-      ctx.beginPath();
-      ctx.arc(shape.posX, shape.posY, shape.radius, 0, 2 * Math.PI);
-      ctx.stroke();
-    } else {
-      console.error("Unknown shape:", shape);
-    }
-  });
-
-  // ctx.fillRect(25, 25, 100, 100);
-  // ctx.clearRect(45, 45, 60, 60);
-  // ctx.strokeRect(50, 50, 50, 50);
-};
+import * as CR from "./canvas/render";
+import * as CS from "./canvas/state";
 
 const main = (rootElementId: string) => {
   const nyteGrafRoot = document.getElementById(rootElementId);
@@ -74,41 +19,22 @@ const main = (rootElementId: string) => {
 
   resizeCanvas();
 
-  const renderCanvasState = canvasStateRenderer(canvas);
+  const blackStroke = CS.style({ strokeWidth: 1, strokeColor: "#000000" });
+  const redStroke = CS.style({ strokeWidth: 1, strokeColor: "#ff0000" });
 
-  renderCanvasState({
-    layerOrder: [],
-    layers: [],
-    shapes: [
-      {
-        type: "rectangle",
-        layerId: "layer-lol",
-        id: uuidV4(),
-        posX: 10,
-        posY: 10,
-        width: 100,
-        height: 100
-      },
-      {
-        type: "circle",
-        layerId: "layer-lol",
-        id: uuidV4(),
-        posX: 300,
-        posY: 110,
-        radius: 100
-      },
-      {
-        type: "poly-line",
-        layerId: "layer-lol",
-        id: uuidV4(),
-        points: [
-          { posX: 100, posY: 0 },
-          { posX: 100, posY: 20 },
-          { posX: 100, posY: 100 }
-        ]
-      }
-    ]
-  });
+  const greenFill = CS.style({ fillColor: "#00ff00" });
+
+  const mutateCanvasState = CS.mutator([
+    CS.instance(blackStroke(CS.rectangle(10, 10, 100, 100))),
+    CS.instance(greenFill(CS.circle(300, 110, 100))),
+    CS.instance(redStroke(CS.polyLine([10, 200], [200, 200], [200, 250])))
+  ]);
+
+  const canvasState = mutateCanvasState(CS.state());
+
+  const renderCanvasState = CR.renderer(canvas);
+
+  renderCanvasState(canvasState);
 };
 
 setTimeout(() => main("nyte-graf-root"), 1);
