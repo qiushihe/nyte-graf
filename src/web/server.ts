@@ -14,6 +14,6 @@ export const startServer = (options?: StartServerOptions) => {
   app.use("/nyte-graf", express.static(path.join(__dirname, "public")));
 
   app.listen(port, () => {
-    console.log(`NyteGraf web server listening on port ${port}`);
+    console.log(`NyteGraf web server running at: http://localhost:${port}/nyte-graf`);
   });
 };

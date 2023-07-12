@@ -1,5 +1,7 @@
 import debounce from "lodash/fp/debounce";
 
+import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
+
 type CanvasLayer = { id: string };
 
 type CanvasShapeRectangle = {
@@ -14,7 +16,7 @@ type CanvasShapeCircle = { type: "circle"; posX: number; posY: number; radius: n
 
 type CanvasShapePolyLine = {
   type: "poly-line";
-  segments: { fromX: number; fromY: number; toX: number; toY: number }[];
+  points: { posX: number; posY: number }[];
 };
 
 type CanvasShape = { id: string; layerId: string } & (
@@ -32,9 +34,28 @@ type CanvasState = {
 const canvasStateRenderer = (canvas: HTMLCanvasElement) => (canvasState: CanvasState) => {
   const ctx = canvas.getContext("2d");
 
-  ctx.fillRect(25, 25, 100, 100);
-  ctx.clearRect(45, 45, 60, 60);
-  ctx.strokeRect(50, 50, 50, 50);
+  console.log(canvasState);
+
+  canvasState.shapes.forEach((shape) => {
+    // ctx.scale(1, 1);
+    // ctx.translate(100, 100);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1;
+
+    if (shape.type === "rectangle") {
+      ctx.strokeRect(shape.posX, shape.posY, shape.width, shape.height);
+    } else if (shape.type === "circle") {
+      ctx.beginPath();
+      ctx.arc(shape.posX, shape.posY, shape.radius, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else {
+      console.error("Unknown shape:", shape);
+    }
+  });
+
+  // ctx.fillRect(25, 25, 100, 100);
+  // ctx.clearRect(45, 45, 60, 60);
+  // ctx.strokeRect(50, 50, 50, 50);
 };
 
 const main = (rootElementId: string) => {
@@ -58,7 +79,35 @@ const main = (rootElementId: string) => {
   renderCanvasState({
     layerOrder: [],
     layers: [],
-    shapes: []
+    shapes: [
+      {
+        type: "rectangle",
+        layerId: "layer-lol",
+        id: uuidV4(),
+        posX: 10,
+        posY: 10,
+        width: 100,
+        height: 100
+      },
+      {
+        type: "circle",
+        layerId: "layer-lol",
+        id: uuidV4(),
+        posX: 300,
+        posY: 110,
+        radius: 100
+      },
+      {
+        type: "poly-line",
+        layerId: "layer-lol",
+        id: uuidV4(),
+        points: [
+          { posX: 100, posY: 0 },
+          { posX: 100, posY: 20 },
+          { posX: 100, posY: 100 }
+        ]
+      }
+    ]
   });
 };
 
