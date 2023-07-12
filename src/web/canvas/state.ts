@@ -28,6 +28,8 @@ export type PolyLine = StrokeStyle & {
 
 export type Shape = Rectangle | Circle | PolyLine;
 
+export type Ref = { id: string | null };
+
 export type Instance<TShape extends Shape> = {
   id: string;
   layerId: string | null;
@@ -36,12 +38,18 @@ export type Instance<TShape extends Shape> = {
 export type StateShape = Instance<Rectangle> | Instance<Circle> | Instance<PolyLine>;
 
 export type State = {
+  backgroundColor: string;
   layerOrder: string[];
   layers: Layer[];
   shapes: StateShape[];
 };
 
-export const state = (): State => ({ layerOrder: [], layers: [], shapes: [] });
+export const state = (): State => ({
+  backgroundColor: "#ffffff",
+  layerOrder: [],
+  layers: [],
+  shapes: []
+});
 
 export const rectangle = (
   posX: number,
@@ -72,12 +80,35 @@ export const style =
   (style: Style) =>
   (shape: Shape): Shape => ({ ...shape, ...style });
 
+export const ref = (): Ref => ({ id: null });
+
 export const instance =
-  <TShape extends Shape>(shape: TShape) =>
-  (state: State): State => ({
-    ...state,
-    shapes: [...state.shapes, { ...shape, id: uuidV4(), layerId: null }]
-  });
+  <TShape extends Shape>(shape: TShape, ref?: Ref) =>
+  (state: State): State => {
+    const id = uuidV4();
+
+    if (ref) {
+      ref.id = id;
+    }
+
+    return {
+      ...state,
+      shapes: [...state.shapes, { ...shape, id, layerId: null }]
+    };
+  };
+
+export const remove =
+  (id: string) =>
+  (state: State): State => {
+    return {
+      ...state,
+      shapes: state.shapes.filter((shape) => shape.id !== id)
+    };
+  };
+
+export const backgroundColor =
+  (color: string) =>
+  (state: State): State => ({ ...state, backgroundColor: color });
 
 export const mutator =
   (fns: ((input: State) => State)[]) =>

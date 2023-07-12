@@ -21,12 +21,13 @@ const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: CS.Style) =
 };
 
 export const renderer =
-  (canvas: HTMLCanvasElement) => (state: CS.State, previousState?: CS.State) => {
+  (canvas: HTMLCanvasElement) => (state: CS.State /* , previousState?: CS.State */) => {
     const ctx = canvas.getContext("2d");
     const resetShapeStyle = shapeStyleResetter(ctx);
     const applyShapeStyle = shapeStyleApplier(ctx);
 
-    console.log(state, previousState);
+    ctx.fillStyle = state.backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     state.shapes.forEach((shape) => {
       // ctx.scale(1, 1);
