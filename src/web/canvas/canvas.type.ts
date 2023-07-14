@@ -24,8 +24,6 @@ export type PolyLine = StrokeStyle & {
 
 export type Shape = Rectangle | Circle | PolyLine;
 
-export type Ref = { id: string | null };
-
 export type ShapeInstance<TShape extends Shape> = {
   id: string;
   layerId: string | null;
@@ -39,3 +37,10 @@ export type State = {
   layers: Layer[];
   shapes: StateShape[];
 };
+
+export type Ref = { id: string | null };
+
+export interface RefRegistry {
+  get(name: string): Ref;
+  remove(name: string): void;
+}

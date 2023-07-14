@@ -1,14 +1,32 @@
 import debounce from "lodash/fp/debounce";
 
 import { State } from "~nyte-graf-web/canvas/canvas.type";
+import { RefRegistry } from "~nyte-graf-web/canvas/canvas.type";
 import { shapeClickedOnDetector } from "~nyte-graf-web/canvas/click";
+import { createRefRegistry } from "~nyte-graf-web/canvas/ref";
 import { renderer as canvasRenderer } from "~nyte-graf-web/canvas/render";
 import * as CS from "~nyte-graf-web/canvas/state";
+
+enum CanvasStateMachineEventName {
+  MouseDown = "mousedown",
+  MouseUp = "mouseup"
+}
+
+type CanvasStateMachineEventPayload = {
+  [CanvasStateMachineEventName.MouseDown]: { posX: number; posY: number };
+  [CanvasStateMachineEventName.MouseUp]: { posX: number; posY: number; downTime: number };
+};
+
+type CanvasStateMachineEvent<TEventName extends CanvasStateMachineEventName> = {
+  type: TEventName;
+  payload: CanvasStateMachineEventPayload[TEventName];
+};
 
 class CanvasStateMachine {
   // Canvas and its state
   private readonly canvas: HTMLCanvasElement;
   private canvasState: State;
+  private canvasRefs: RefRegistry;
 
   // Input variables
   private inputHasMouse: boolean;
@@ -17,11 +35,13 @@ class CanvasStateMachine {
 
   // Machine states
   private stateIsRunning: boolean;
+  private clearClickMarkerTimeout: NodeJS.Timeout | null;
 
   public constructor(canvas: HTMLCanvasElement, canvasState?: State) {
     // Canvas and its state
     this.canvas = canvas;
     this.canvasState = canvasState || CS.initialState();
+    this.canvasRefs = createRefRegistry();
 
     // Input variables
     this.inputHasMouse = false;
@@ -30,7 +50,24 @@ class CanvasStateMachine {
 
     // Machine states
     this.stateIsRunning = false;
+    this.clearClickMarkerTimeout = null;
+
+    canvas.addEventListener("mouseenter", () => this.setInputHasMouse(true));
+    canvas.addEventListener("mouseleave", () => this.setInputHasMouse(false));
+    canvas.addEventListener("mousedown", () => this.setInputIsMouseDown(true));
+    canvas.addEventListener("mouseup", () => this.setInputIsMouseDown(false));
+    canvas.addEventListener("mousemove", (evt) =>
+      this.setInputMousePosition(
+        evt.x - canvas.getBoundingClientRect().x,
+        evt.y - canvas.getBoundingClientRect().y
+      )
+    );
   }
+
+  public addEventListener<TEventName extends CanvasStateMachineEventName>(
+    evtName: TEventName,
+    handler: (evt: CanvasStateMachineEvent<TEventName>, machine: CanvasStateMachine) => void
+  ) {}
 
   public setInputHasMouse(hasMouse: boolean) {
     this.inputHasMouse = hasMouse;
@@ -59,39 +96,58 @@ class CanvasStateMachine {
         }
       });
 
-      const circleRef = CS.createRef();
-      const hLineRef = CS.createRef();
-      const vLineRef = CS.createRef();
-
       setTimeout(() => {
+        if (this.clearClickMarkerTimeout) {
+          this.mutateCanvasState([
+            CS.removeShape(this.canvasRefs.get("click-marker-circle")),
+            CS.removeShape(this.canvasRefs.get("click-marker-h-line")),
+            CS.removeShape(this.canvasRefs.get("click-marker-v-line"))
+          ]);
+          clearTimeout(this.clearClickMarkerTimeout);
+          this.clearClickMarkerTimeout = null;
+        }
+
         this.mutateCanvasState([
-          CS.addCircle([this.inputMousePosition[0], this.inputMousePosition[1], 10], circleRef),
+          CS.addCircle(
+            [this.inputMousePosition[0], this.inputMousePosition[1], 10],
+            this.canvasRefs.get("click-marker-circle")
+          ),
           CS.addPolyLine(
             [
               [this.inputMousePosition[0] - 3, this.inputMousePosition[1]],
               [this.inputMousePosition[0] + 3, this.inputMousePosition[1]]
             ],
-            hLineRef
+            this.canvasRefs.get("click-marker-h-line")
           ),
           CS.addPolyLine(
             [
               [this.inputMousePosition[0], this.inputMousePosition[1] - 3],
               [this.inputMousePosition[0], this.inputMousePosition[1] + 3]
             ],
-            vLineRef
+            this.canvasRefs.get("click-marker-v-line")
           ),
 
-          CS.updateShapeStyle(circleRef, { strokeWidth: 1, strokeColor: "#ff0000" }),
-          CS.updateShapeStyle(hLineRef, { strokeWidth: 1, strokeColor: "#ff0000" }),
-          CS.updateShapeStyle(vLineRef, { strokeWidth: 1, strokeColor: "#ff0000" })
+          CS.updateShapeStyle(this.canvasRefs.get("click-marker-circle"), {
+            strokeWidth: 1,
+            strokeColor: "#ff0000"
+          }),
+          CS.updateShapeStyle(this.canvasRefs.get("click-marker-h-line"), {
+            strokeWidth: 1,
+            strokeColor: "#ff0000"
+          }),
+          CS.updateShapeStyle(this.canvasRefs.get("click-marker-v-line"), {
+            strokeWidth: 1,
+            strokeColor: "#ff0000"
+          })
         ]);
 
-        setTimeout(() => {
+        this.clearClickMarkerTimeout = setTimeout(() => {
           this.mutateCanvasState([
-            CS.removeShape(circleRef.id),
-            CS.removeShape(hLineRef.id),
-            CS.removeShape(vLineRef.id)
+            CS.removeShape(this.canvasRefs.get("click-marker-circle")),
+            CS.removeShape(this.canvasRefs.get("click-marker-h-line")),
+            CS.removeShape(this.canvasRefs.get("click-marker-v-line"))
           ]);
+          this.clearClickMarkerTimeout = null;
         }, 1000);
       }, 1);
     }
@@ -130,37 +186,28 @@ const main = (rootElementId: string) => {
 
   const stateMachine = new CanvasStateMachine(canvas);
 
-  canvas.addEventListener("mouseenter", () => stateMachine.setInputHasMouse(true));
-  canvas.addEventListener("mouseleave", () => stateMachine.setInputHasMouse(false));
-  canvas.addEventListener("mousedown", () => stateMachine.setInputIsMouseDown(true));
-  canvas.addEventListener("mouseup", () => stateMachine.setInputIsMouseDown(false));
-  canvas.addEventListener("mousemove", (evt) =>
-    stateMachine.setInputMousePosition(
-      evt.x - canvas.getBoundingClientRect().x,
-      evt.y - canvas.getBoundingClientRect().y
-    )
-  );
+  stateMachine.addEventListener(CanvasStateMachineEventName.MouseDown, (evt) => {
+    console.log(evt);
+  });
 
-  const rectangleRef = CS.createRef();
-  const circleRef = CS.createRef();
-  const polyLineRef = CS.createRef();
+  const refs = createRefRegistry();
 
   stateMachine.mutateCanvasState([
     CS.setBackgroundColor("rgba(169,169,169)"),
-    CS.addRectangle([10, 10, 100, 100], rectangleRef),
-    CS.addCircle([150, 110, 100], circleRef),
+    CS.addRectangle([10, 10, 100, 100], refs.get("rectangle")),
+    CS.addCircle([150, 110, 100], refs.get("circle")),
     CS.addPolyLine(
       [
         [60, 170],
         [250, 170],
         [250, 220]
       ],
-      polyLineRef
+      refs.get("poly-line")
     ),
 
-    CS.updateShapeStyle(rectangleRef, { strokeWidth: 1, strokeColor: "#000000" }),
-    CS.updateShapeStyle(circleRef, { fillColor: "#00ff00" }),
-    CS.updateShapeStyle(polyLineRef, { strokeWidth: 1, strokeColor: "#ff0000" })
+    CS.updateShapeStyle(refs.get("rectangle"), { strokeWidth: 1, strokeColor: "#000000" }),
+    CS.updateShapeStyle(refs.get("circle"), { fillColor: "#00ff00" }),
+    CS.updateShapeStyle(refs.get("poly-line"), { strokeWidth: 1, strokeColor: "#ff0000" })
   ]);
 };
 

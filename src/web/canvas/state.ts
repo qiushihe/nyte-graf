@@ -3,13 +3,7 @@ import flow from "lodash/fp/flow";
 import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
 import { Coordinate } from "~nyte-graf-web/polygon/polygon.type";
 
-import { Circle } from "./canvas.type";
-import { PolyLine } from "./canvas.type";
-import { Rectangle } from "./canvas.type";
-import { ShapeInstance } from "./canvas.type";
-import { Ref } from "./canvas.type";
-import { State } from "./canvas.type";
-import { Style } from "./canvas.type";
+import { Circle, PolyLine, Rectangle, Ref, ShapeInstance, State, Style } from "./canvas.type";
 
 export const initialState = (): State => ({
   backgroundColor: "#ffffff",
@@ -17,8 +11,6 @@ export const initialState = (): State => ({
   layers: [],
   shapes: []
 });
-
-export const createRef = (): Ref => ({ id: null });
 
 export const addRectangle =
   ([posX, posY, width, height]: [number, number, number, number], ref?: Ref) =>
@@ -98,11 +90,11 @@ export const updateShapeStyle =
   };
 
 export const removeShape =
-  (id: string) =>
+  (ref: Ref) =>
   (state: State): State => {
     return {
       ...state,
-      shapes: state.shapes.filter((shape) => shape.id !== id)
+      shapes: state.shapes.filter((shape) => shape.id !== ref.id)
     };
   };
 
