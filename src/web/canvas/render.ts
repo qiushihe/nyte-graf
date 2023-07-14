@@ -22,6 +22,8 @@ const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: Style) => {
 
 export const renderer =
   (canvas: HTMLCanvasElement) => (state: State /* , previousState?: CS.State */) => {
+    console.log("State", state);
+
     const ctx = canvas.getContext("2d");
     const resetShapeStyle = shapeStyleResetter(ctx);
     const applyShapeStyle = shapeStyleApplier(ctx);

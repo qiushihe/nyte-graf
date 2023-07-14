@@ -59,42 +59,38 @@ class CanvasStateMachine {
         }
       });
 
-      const withRedStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#ff0000" });
-
-      const circle = withRedStroke(
-        CS.createCircle(this.inputMousePosition[0], this.inputMousePosition[1], 10)
-      );
-
-      const hLine = withRedStroke(
-        CS.createPolyLine(
-          [this.inputMousePosition[0] - 3, this.inputMousePosition[1]],
-          [this.inputMousePosition[0] + 3, this.inputMousePosition[1]]
-        )
-      );
-
-      const vLine = withRedStroke(
-        CS.createPolyLine(
-          [this.inputMousePosition[0], this.inputMousePosition[1] - 3],
-          [this.inputMousePosition[0], this.inputMousePosition[1] + 3]
-        )
-      );
-
       const circleRef = CS.createRef();
       const hLineRef = CS.createRef();
       const vLineRef = CS.createRef();
 
       setTimeout(() => {
         this.mutateCanvasState([
-          CS.addShapeInstance(circle, circleRef),
-          CS.addShapeInstance(hLine, hLineRef),
-          CS.addShapeInstance(vLine, vLineRef)
+          CS.addCircle([this.inputMousePosition[0], this.inputMousePosition[1], 10], circleRef),
+          CS.addPolyLine(
+            [
+              [this.inputMousePosition[0] - 3, this.inputMousePosition[1]],
+              [this.inputMousePosition[0] + 3, this.inputMousePosition[1]]
+            ],
+            hLineRef
+          ),
+          CS.addPolyLine(
+            [
+              [this.inputMousePosition[0], this.inputMousePosition[1] - 3],
+              [this.inputMousePosition[0], this.inputMousePosition[1] + 3]
+            ],
+            vLineRef
+          ),
+
+          CS.updateShapeStyle(circleRef, { strokeWidth: 1, strokeColor: "#ff0000" }),
+          CS.updateShapeStyle(hLineRef, { strokeWidth: 1, strokeColor: "#ff0000" }),
+          CS.updateShapeStyle(vLineRef, { strokeWidth: 1, strokeColor: "#ff0000" })
         ]);
 
         setTimeout(() => {
           this.mutateCanvasState([
-            CS.removeShapeInstance(circleRef.id),
-            CS.removeShapeInstance(hLineRef.id),
-            CS.removeShapeInstance(vLineRef.id)
+            CS.removeShape(circleRef.id),
+            CS.removeShape(hLineRef.id),
+            CS.removeShape(vLineRef.id)
           ]);
         }, 1000);
       }, 1);
@@ -106,7 +102,7 @@ class CanvasStateMachine {
   }
 
   public mutateCanvasState(fns: ((input: State) => State)[]) {
-    const mutateCanvasState = CS.mutator(fns);
+    const mutateCanvasState = CS.stateMutator(fns);
     this.canvasState = mutateCanvasState(this.canvasState);
     this.render();
   }
@@ -116,8 +112,6 @@ class CanvasStateMachine {
     renderCanvasState(this.canvasState);
   }
 }
-
-// Polygon intersections: https://github.com/thelonious/kld-intersections
 
 const main = (rootElementId: string) => {
   const nyteGrafRoot = document.getElementById(rootElementId);
@@ -134,10 +128,6 @@ const main = (rootElementId: string) => {
   window.addEventListener("resize", debounce(100)(resizeCanvas), false);
   resizeCanvas();
 
-  const withBlackStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#000000" });
-  const withRedStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#ff0000" });
-  const withGreenFill = CS.createStyle({ fillColor: "#00ff00" });
-
   const stateMachine = new CanvasStateMachine(canvas);
 
   canvas.addEventListener("mouseenter", () => stateMachine.setInputHasMouse(true));
@@ -151,11 +141,26 @@ const main = (rootElementId: string) => {
     )
   );
 
+  const rectangleRef = CS.createRef();
+  const circleRef = CS.createRef();
+  const polyLineRef = CS.createRef();
+
   stateMachine.mutateCanvasState([
     CS.setBackgroundColor("rgba(169,169,169)"),
-    CS.addShapeInstance(withBlackStroke(CS.createRectangle(10, 10, 100, 100))),
-    CS.addShapeInstance(withGreenFill(CS.createCircle(300, 110, 100))),
-    CS.addShapeInstance(withRedStroke(CS.createPolyLine([10, 200], [200, 200], [200, 250])))
+    CS.addRectangle([10, 10, 100, 100], rectangleRef),
+    CS.addCircle([150, 110, 100], circleRef),
+    CS.addPolyLine(
+      [
+        [60, 170],
+        [250, 170],
+        [250, 220]
+      ],
+      polyLineRef
+    ),
+
+    CS.updateShapeStyle(rectangleRef, { strokeWidth: 1, strokeColor: "#000000" }),
+    CS.updateShapeStyle(circleRef, { fillColor: "#00ff00" }),
+    CS.updateShapeStyle(polyLineRef, { strokeWidth: 1, strokeColor: "#ff0000" })
   ]);
 };
 

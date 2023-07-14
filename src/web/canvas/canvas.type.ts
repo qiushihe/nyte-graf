@@ -1,4 +1,4 @@
-export type Layer = { id: string };
+export type Layer = { id: string; name: string };
 
 export type FillStyle = {
   fillColor?: string;
@@ -26,12 +26,12 @@ export type Shape = Rectangle | Circle | PolyLine;
 
 export type Ref = { id: string | null };
 
-export type Instance<TShape extends Shape> = {
+export type ShapeInstance<TShape extends Shape> = {
   id: string;
   layerId: string | null;
 } & TShape;
 
-export type StateShape = Instance<Rectangle> | Instance<Circle> | Instance<PolyLine>;
+export type StateShape = ShapeInstance<Rectangle> | ShapeInstance<Circle> | ShapeInstance<PolyLine>;
 
 export type State = {
   backgroundColor: string;
