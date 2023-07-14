@@ -1,12 +1,14 @@
 import debounce from "lodash/fp/debounce";
 
-import * as CR from "./canvas/render";
-import * as CS from "./canvas/state";
+import { State } from "~nyte-graf-web/canvas/canvas.type";
+import { shapeClickedOnDetector } from "~nyte-graf-web/canvas/click";
+import { renderer as canvasRenderer } from "~nyte-graf-web/canvas/render";
+import * as CS from "~nyte-graf-web/canvas/state";
 
 class CanvasStateMachine {
   // Canvas and its state
   private readonly canvas: HTMLCanvasElement;
-  private canvasState: CS.State;
+  private canvasState: State;
 
   // Input variables
   private inputHasMouse: boolean;
@@ -16,10 +18,10 @@ class CanvasStateMachine {
   // Machine states
   private stateIsRunning: boolean;
 
-  public constructor(canvas: HTMLCanvasElement, canvasState?: CS.State) {
+  public constructor(canvas: HTMLCanvasElement, canvasState?: State) {
     // Canvas and its state
     this.canvas = canvas;
-    this.canvasState = canvasState || CS.state();
+    this.canvasState = canvasState || CS.initialState();
 
     // Input variables
     this.inputHasMouse = false;
@@ -44,42 +46,55 @@ class CanvasStateMachine {
     this.inputIsMouseDown = mouseDown;
 
     if (this.inputIsMouseDown) {
-      const redStroke = CS.style({ strokeWidth: 1, strokeColor: "#ff0000" });
-
-      const circle = redStroke(
-        CS.circle(this.inputMousePosition[0], this.inputMousePosition[1], 10)
+      const clickedOnShape = shapeClickedOnDetector(
+        this.inputMousePosition[0],
+        this.inputMousePosition[1],
+        10,
+        16
       );
 
-      const hLine = redStroke(
-        CS.polyLine(
+      this.canvasState.shapes.forEach((shape) => {
+        if (clickedOnShape(shape)) {
+          console.log("Clicked on shape:", shape);
+        }
+      });
+
+      const withRedStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#ff0000" });
+
+      const circle = withRedStroke(
+        CS.createCircle(this.inputMousePosition[0], this.inputMousePosition[1], 10)
+      );
+
+      const hLine = withRedStroke(
+        CS.createPolyLine(
           [this.inputMousePosition[0] - 3, this.inputMousePosition[1]],
           [this.inputMousePosition[0] + 3, this.inputMousePosition[1]]
         )
       );
 
-      const vLine = redStroke(
-        CS.polyLine(
+      const vLine = withRedStroke(
+        CS.createPolyLine(
           [this.inputMousePosition[0], this.inputMousePosition[1] - 3],
           [this.inputMousePosition[0], this.inputMousePosition[1] + 3]
         )
       );
 
-      const circleRef = CS.ref();
-      const hLineRef = CS.ref();
-      const vLineRef = CS.ref();
+      const circleRef = CS.createRef();
+      const hLineRef = CS.createRef();
+      const vLineRef = CS.createRef();
 
       setTimeout(() => {
         this.mutateCanvasState([
-          CS.instance(circle, circleRef),
-          CS.instance(hLine, hLineRef),
-          CS.instance(vLine, vLineRef)
+          CS.addShapeInstance(circle, circleRef),
+          CS.addShapeInstance(hLine, hLineRef),
+          CS.addShapeInstance(vLine, vLineRef)
         ]);
 
         setTimeout(() => {
           this.mutateCanvasState([
-            CS.remove(circleRef.id),
-            CS.remove(hLineRef.id),
-            CS.remove(vLineRef.id)
+            CS.removeShapeInstance(circleRef.id),
+            CS.removeShapeInstance(hLineRef.id),
+            CS.removeShapeInstance(vLineRef.id)
           ]);
         }, 1000);
       }, 1);
@@ -90,14 +105,14 @@ class CanvasStateMachine {
     this.inputMousePosition = [x, y];
   }
 
-  public mutateCanvasState(fns: ((input: CS.State) => CS.State)[]) {
+  public mutateCanvasState(fns: ((input: State) => State)[]) {
     const mutateCanvasState = CS.mutator(fns);
     this.canvasState = mutateCanvasState(this.canvasState);
     this.render();
   }
 
   public render() {
-    const renderCanvasState = CR.renderer(this.canvas);
+    const renderCanvasState = canvasRenderer(this.canvas);
     renderCanvasState(this.canvasState);
   }
 }
@@ -119,9 +134,9 @@ const main = (rootElementId: string) => {
   window.addEventListener("resize", debounce(100)(resizeCanvas), false);
   resizeCanvas();
 
-  const blackStroke = CS.style({ strokeWidth: 1, strokeColor: "#000000" });
-  const redStroke = CS.style({ strokeWidth: 1, strokeColor: "#ff0000" });
-  const greenFill = CS.style({ fillColor: "#00ff00" });
+  const withBlackStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#000000" });
+  const withRedStroke = CS.createStyle({ strokeWidth: 1, strokeColor: "#ff0000" });
+  const withGreenFill = CS.createStyle({ fillColor: "#00ff00" });
 
   const stateMachine = new CanvasStateMachine(canvas);
 
@@ -137,10 +152,10 @@ const main = (rootElementId: string) => {
   );
 
   stateMachine.mutateCanvasState([
-    CS.backgroundColor("rgba(169,169,169)"),
-    CS.instance(blackStroke(CS.rectangle(10, 10, 100, 100))),
-    CS.instance(greenFill(CS.circle(300, 110, 100))),
-    CS.instance(redStroke(CS.polyLine([10, 200], [200, 200], [200, 250])))
+    CS.setBackgroundColor("rgba(169,169,169)"),
+    CS.addShapeInstance(withBlackStroke(CS.createRectangle(10, 10, 100, 100))),
+    CS.addShapeInstance(withGreenFill(CS.createCircle(300, 110, 100))),
+    CS.addShapeInstance(withRedStroke(CS.createPolyLine([10, 200], [200, 200], [200, 250])))
   ]);
 };
 

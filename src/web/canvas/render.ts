@@ -1,4 +1,4 @@
-import * as CS from "./state";
+import { State, Style } from "./canvas.type";
 
 const shapeStyleResetter = (ctx: CanvasRenderingContext2D) => () => {
   ctx.fillStyle = "#00000000";
@@ -6,7 +6,7 @@ const shapeStyleResetter = (ctx: CanvasRenderingContext2D) => () => {
   ctx.lineWidth = 0;
 };
 
-const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: CS.Style) => {
+const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: Style) => {
   if (style.fillColor) {
     ctx.fillStyle = style.fillColor;
   }
@@ -21,7 +21,7 @@ const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: CS.Style) =
 };
 
 export const renderer =
-  (canvas: HTMLCanvasElement) => (state: CS.State /* , previousState?: CS.State */) => {
+  (canvas: HTMLCanvasElement) => (state: State /* , previousState?: CS.State */) => {
     const ctx = canvas.getContext("2d");
     const resetShapeStyle = shapeStyleResetter(ctx);
     const applyShapeStyle = shapeStyleApplier(ctx);

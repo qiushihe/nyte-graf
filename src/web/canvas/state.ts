@@ -2,56 +2,22 @@ import flow from "lodash/fp/flow";
 
 import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
 
-export type Layer = { id: string };
+import { Circle } from "./canvas.type";
+import { PolyLine } from "./canvas.type";
+import { Rectangle } from "./canvas.type";
+import { Ref } from "./canvas.type";
+import { Shape } from "./canvas.type";
+import { State } from "./canvas.type";
+import { Style } from "./canvas.type";
 
-type FillStyle = {
-  fillColor?: string;
-};
-
-type StrokeStyle = {
-  strokeWidth?: number;
-  strokeColor?: string;
-};
-
-export type Style = FillStyle & StrokeStyle;
-
-export type Rectangle = FillStyle &
-  StrokeStyle & { type: "rectangle"; posX: number; posY: number; width: number; height: number };
-
-export type Circle = FillStyle &
-  StrokeStyle & { type: "circle"; posX: number; posY: number; radius: number };
-
-export type PolyLine = StrokeStyle & {
-  type: "poly-line";
-  points: { posX: number; posY: number }[];
-};
-
-export type Shape = Rectangle | Circle | PolyLine;
-
-export type Ref = { id: string | null };
-
-export type Instance<TShape extends Shape> = {
-  id: string;
-  layerId: string | null;
-} & TShape;
-
-export type StateShape = Instance<Rectangle> | Instance<Circle> | Instance<PolyLine>;
-
-export type State = {
-  backgroundColor: string;
-  layerOrder: string[];
-  layers: Layer[];
-  shapes: StateShape[];
-};
-
-export const state = (): State => ({
+export const initialState = (): State => ({
   backgroundColor: "#ffffff",
   layerOrder: [],
   layers: [],
   shapes: []
 });
 
-export const rectangle = (
+export const createRectangle = (
   posX: number,
   posY: number,
   width: number,
@@ -64,25 +30,25 @@ export const rectangle = (
   height
 });
 
-export const circle = (posX: number, posY: number, radius: number): Circle => ({
+export const createCircle = (posX: number, posY: number, radius: number): Circle => ({
   type: "circle",
   posX,
   posY,
   radius
 });
 
-export const polyLine = (...points: [number, number][]): PolyLine => ({
+export const createPolyLine = (...points: [number, number][]): PolyLine => ({
   type: "poly-line",
   points: points.map(([posX, posY]) => ({ posX, posY }))
 });
 
-export const style =
+export const createStyle =
   (style: Style) =>
   (shape: Shape): Shape => ({ ...shape, ...style });
 
-export const ref = (): Ref => ({ id: null });
+export const createRef = (): Ref => ({ id: null });
 
-export const instance =
+export const addShapeInstance =
   <TShape extends Shape>(shape: TShape, ref?: Ref) =>
   (state: State): State => {
     const id = uuidV4();
@@ -97,7 +63,7 @@ export const instance =
     };
   };
 
-export const remove =
+export const removeShapeInstance =
   (id: string) =>
   (state: State): State => {
     return {
@@ -106,7 +72,7 @@ export const remove =
     };
   };
 
-export const backgroundColor =
+export const setBackgroundColor =
   (color: string) =>
   (state: State): State => ({ ...state, backgroundColor: color });
 
