@@ -1,29 +1,26 @@
 import debounce from "lodash/fp/debounce";
 
 import { uuidV4 } from "~nyte-graf-core/util/uuid-v4";
-import { addCircle } from "~nyte-graf-web/canvas-state/action/add-circle";
-import { addPolyLine } from "~nyte-graf-web/canvas-state/action/add-poly-line";
-import { addRectangle } from "~nyte-graf-web/canvas-state/action/add-rectangle";
-import { init } from "~nyte-graf-web/canvas-state/action/init";
-import { mouseClick } from "~nyte-graf-web/canvas-state/action/mouse-click";
-import { mouseMove } from "~nyte-graf-web/canvas-state/action/mouse-move";
-import { setBackgroundColor } from "~nyte-graf-web/canvas-state/action/set-background-color";
-import { updateShapeStyle } from "~nyte-graf-web/canvas-state/action/update-shape-style";
-import { wait } from "~nyte-graf-web/canvas-state/action/wait";
-import { canvasRenderer } from "~nyte-graf-web/canvas-state/canvas-render";
-import { CanvasState } from "~nyte-graf-web/canvas-state/canvas-state.type";
-import { clickMarkerMiddleware } from "~nyte-graf-web/canvas-state/middleware/click-marker";
-import { clickedOnMiddleware } from "~nyte-graf-web/canvas-state/middleware/clicked-on";
-import { appReducers } from "~nyte-graf-web/canvas-state/reducer/app";
-import { backgroundColorReducers } from "~nyte-graf-web/canvas-state/reducer/background-color";
-import { mousePositionReducers } from "~nyte-graf-web/canvas-state/reducer/mouse-position";
-import { shapesReducers } from "~nyte-graf-web/canvas-state/reducer/shapes";
-import { StateMachine } from "~nyte-graf-web/state-machine/state-machine";
+import { canvasRenderer } from "~nyte-graf-web/canvas/renderer";
+import { setColor as setBackgroundColor } from "~nyte-graf-web/redux/action/background-color";
+import { mouseClick, mouseMove } from "~nyte-graf-web/redux/action/mouse-position";
+import { addRectangle } from "~nyte-graf-web/redux/action/shapes";
+import { addCircle } from "~nyte-graf-web/redux/action/shapes";
+import { addPolyLine } from "~nyte-graf-web/redux/action/shapes";
+import { updateShapeStyle } from "~nyte-graf-web/redux/action/shapes";
+import { createStore } from "~nyte-graf-web/redux/store";
 
-// TODO: Replace custom state machine with https://redux.js.org/introduction/getting-started#redux-core
+const with30Fps = debounce(1000 / 60);
 
-const main = (rootElementId: string) => {
-  const nyteGrafRoot = document.getElementById(rootElementId);
+const with60Fps = debounce(1000 / 60);
+
+type MainOptions = {
+  rootElementId: string;
+  fps: 30 | 60;
+};
+
+const main = (options: MainOptions) => {
+  const nyteGrafRoot = document.getElementById(options.rootElementId);
 
   const canvas = document.createElement("canvas");
   canvas.style.display = "block";
@@ -39,53 +36,43 @@ const main = (rootElementId: string) => {
 
   const renderCanvas = canvasRenderer(canvas);
 
-  const stateMachine = new StateMachine<CanvasState>(
-    {
-      mousePosition: { x: -1, y: -1 },
-      backgroundColor: "#ffffff",
-      layerOrder: [],
-      layers: [],
-      shapes: []
-    },
-    [...appReducers, ...mousePositionReducers, ...backgroundColorReducers, ...shapesReducers],
-    [clickMarkerMiddleware(renderCanvas), clickedOnMiddleware]
+  const store = createStore();
+
+  store.subscribe(
+    (options.fps === 60 ? with60Fps : with30Fps)(() => {
+      // console.log("store update", store.getState());
+      renderCanvas(store.getState());
+    })
   );
 
   canvas.addEventListener("mousemove", (evt) => {
-    stateMachine.dispatch([
+    store.dispatch(
       mouseMove(evt.x - canvas.getBoundingClientRect().x, evt.y - canvas.getBoundingClientRect().y)
-    ]);
+    );
   });
 
   canvas.addEventListener("mouseup", () => {
-    stateMachine.dispatch([mouseClick()]);
+    store.dispatch(mouseClick());
   });
+
+  store.dispatch(setBackgroundColor("#696969"));
 
   const rectangleId = uuidV4();
   const circleId = uuidV4();
   const polyLineId = uuidV4();
 
-  stateMachine.dispatch(
-    [
-      init(),
-      setBackgroundColor("#696969"),
-      addRectangle(rectangleId, 10, 10, 100, 100),
-      updateShapeStyle(rectangleId, { strokeWidth: 1, strokeColor: "#000000" }),
-      wait(500),
-      addCircle(circleId, 150, 110, 100),
-      updateShapeStyle(circleId, { fillColor: "#00ff00" }),
-      wait(500),
-      addPolyLine(polyLineId, [
-        [60, 170],
-        [250, 170],
-        [250, 220]
-      ]),
-      updateShapeStyle(polyLineId, { strokeWidth: 1, strokeColor: "#ff0000" })
-    ],
-    (machine) => {
-      renderCanvas(machine.getState());
-    }
+  store.dispatch(addRectangle(rectangleId, 10, 10, 100, 100));
+  store.dispatch(updateShapeStyle(rectangleId, { strokeWidth: 1, strokeColor: "#000000" }));
+  store.dispatch(addCircle(circleId, 150, 110, 100));
+  store.dispatch(updateShapeStyle(circleId, { fillColor: "#00ff00" }));
+  store.dispatch(
+    addPolyLine(polyLineId, [
+      [60, 170],
+      [250, 170],
+      [250, 220]
+    ])
   );
+  store.dispatch(updateShapeStyle(polyLineId, { strokeWidth: 1, strokeColor: "#ff0000" }));
 };
 
-setTimeout(() => main("nyte-graf-root"), 1);
+setTimeout(() => main({ rootElementId: "nyte-graf-root", fps: 60 }), 1);
