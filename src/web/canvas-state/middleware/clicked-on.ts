@@ -40,10 +40,10 @@ export const clickedOnDetector = (
 export const clickedOnMiddleware: StateMachineMiddleware<CanvasState> = {
   types: ["mouse-click"],
   apply: (machine, next, action) => {
-    next(action);
-
     const mouseX = machine.query(mousePositionX);
     const mouseY = machine.query(mousePositionY);
+
+    next(action);
 
     const clickedOnShape = clickedOnDetector(mouseX, mouseY, 10, 16);
 

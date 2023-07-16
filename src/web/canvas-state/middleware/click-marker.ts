@@ -18,10 +18,10 @@ export const clickMarkerMiddleware = (
 ): StateMachineMiddleware<CanvasState> => ({
   types: ["mouse-click"],
   apply: (machine, next, action) => {
-    next(action);
-
     const mouseX = machine.query(mousePositionX);
     const mouseY = machine.query(mousePositionY);
+
+    next(action);
 
     const clearMarker = () => {
       machine.dispatch([removeShape(circleId), removeShape(hLineId), removeShape(vLineId)]);
