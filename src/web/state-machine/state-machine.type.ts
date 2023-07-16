@@ -1,7 +1,10 @@
 export interface IStateMachine<TState> {
   getState: () => TState;
   query: <TData>(selector: StateMachineSelector<TState, TData>) => TData;
-  dispatch: (actions: StateMachineAction[]) => void;
+  dispatch: (
+    actions: StateMachineAction[],
+    done?: (machine: IStateMachine<TState>) => void
+  ) => void;
 }
 
 export type StateMachineAction<TPayload = unknown> = {

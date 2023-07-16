@@ -52,9 +52,13 @@ export class StateMachine<TState> implements IStateMachine<TState> {
     return selector(this.state);
   }
 
-  public dispatch(actions: StateMachineAction[]) {
+  public dispatch(actions: StateMachineAction[], done?: (machine: IStateMachine<TState>) => void) {
     this.processActions(this.state, actions, (newState) => {
       this.state = newState;
+
+      if (done) {
+        done(this);
+      }
     });
   }
 

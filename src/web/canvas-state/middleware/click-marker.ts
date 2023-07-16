@@ -24,9 +24,12 @@ export const clickMarkerMiddleware = (
     next(action);
 
     const clearMarker = () => {
-      machine.dispatch([removeShape(circleId), removeShape(hLineId), removeShape(vLineId)]);
-
-      renderCanvas(machine.getState());
+      machine.dispatch(
+        [removeShape(circleId), removeShape(hLineId), removeShape(vLineId)],
+        (machine) => {
+          renderCanvas(machine.getState());
+        }
+      );
 
       clearTimeout(markerTimeout);
       markerTimeout = null;
@@ -41,22 +44,25 @@ export const clickMarkerMiddleware = (
       hLineId = uuidV4();
       vLineId = uuidV4();
 
-      machine.dispatch([
-        addCircle(circleId, mouseX, mouseY, 10),
-        addPolyLine(hLineId, [
-          [mouseX - 3, mouseY],
-          [mouseX + 3, mouseY]
-        ]),
-        addPolyLine(vLineId, [
-          [mouseX, mouseY - 3],
-          [mouseX, mouseY + 3]
-        ]),
-        updateShapeStyle(circleId, { strokeColor: "#ff0000" }),
-        updateShapeStyle(hLineId, { strokeColor: "#ff0000" }),
-        updateShapeStyle(vLineId, { strokeColor: "#ff0000" })
-      ]);
-
-      renderCanvas(machine.getState());
+      machine.dispatch(
+        [
+          addCircle(circleId, mouseX, mouseY, 10),
+          addPolyLine(hLineId, [
+            [mouseX - 3, mouseY],
+            [mouseX + 3, mouseY]
+          ]),
+          addPolyLine(vLineId, [
+            [mouseX, mouseY - 3],
+            [mouseX, mouseY + 3]
+          ]),
+          updateShapeStyle(circleId, { strokeColor: "#ff0000" }),
+          updateShapeStyle(hLineId, { strokeColor: "#ff0000" }),
+          updateShapeStyle(vLineId, { strokeColor: "#ff0000" })
+        ],
+        (machine) => {
+          renderCanvas(machine.getState());
+        }
+      );
 
       markerTimeout = setTimeout(clearMarker, 1000);
     };
