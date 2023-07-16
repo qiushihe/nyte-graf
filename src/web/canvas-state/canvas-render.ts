@@ -1,4 +1,4 @@
-import { State, Style } from "./canvas.type";
+import { CanvasState, ShapeStyle } from "./canvas-state.type";
 
 const shapeStyleResetter = (ctx: CanvasRenderingContext2D) => () => {
   ctx.fillStyle = "#00000000";
@@ -6,7 +6,7 @@ const shapeStyleResetter = (ctx: CanvasRenderingContext2D) => () => {
   ctx.lineWidth = 0;
 };
 
-const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: Style) => {
+const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: ShapeStyle) => {
   if (style.fillColor) {
     ctx.fillStyle = style.fillColor;
   }
@@ -20,8 +20,8 @@ const shapeStyleApplier = (ctx: CanvasRenderingContext2D) => (style: Style) => {
   }
 };
 
-export const renderer =
-  (canvas: HTMLCanvasElement) => (state: State /* , previousState?: CS.State */) => {
+export const canvasRenderer =
+  (canvas: HTMLCanvasElement) => (state: CanvasState /* , previousState?: CanvasState */) => {
     console.log("State", state);
 
     const ctx = canvas.getContext("2d");

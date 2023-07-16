@@ -1,11 +1,14 @@
+import { CanvasState } from "~nyte-graf-web/canvas-state/canvas-state.type";
+import { Shape } from "~nyte-graf-web/canvas-state/canvas-state.type";
+import { mousePositionX } from "~nyte-graf-web/canvas-state/selector/mouse-position";
+import { mousePositionY } from "~nyte-graf-web/canvas-state/selector/mouse-position";
 import { polygonCollideWithPolygon } from "~nyte-graf-web/polygon/collide";
 import { polygonCollideWithPolyLine } from "~nyte-graf-web/polygon/collide";
 import { circleToPolygon } from "~nyte-graf-web/polygon/convert";
 import { Coordinate, Polygon } from "~nyte-graf-web/polygon/polygon.type";
+import { StateMachineMiddleware } from "~nyte-graf-web/state-machine/state-machine.type";
 
-import { Shape } from "./canvas.type";
-
-export const shapeClickedOnDetector = (
+export const clickedOnDetector = (
   clickX: number,
   clickY: number,
   toleranceRadius: number,
@@ -32,4 +35,22 @@ export const shapeClickedOnDetector = (
       return false;
     }
   };
+};
+
+export const clickedOnMiddleware: StateMachineMiddleware<CanvasState> = {
+  types: ["mouse-click"],
+  apply: (machine, next, action) => {
+    next(action);
+
+    const mouseX = machine.query(mousePositionX);
+    const mouseY = machine.query(mousePositionY);
+
+    const clickedOnShape = clickedOnDetector(mouseX, mouseY, 10, 16);
+
+    machine.getState().shapes.forEach((shape) => {
+      if (clickedOnShape(shape)) {
+        console.log("Clicked on shape:", shape);
+      }
+    });
+  }
 };

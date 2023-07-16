@@ -1,5 +1,3 @@
-export type Layer = { id: string; name: string };
-
 export type FillStyle = {
   fillColor?: string;
 };
@@ -9,7 +7,9 @@ export type StrokeStyle = {
   strokeColor?: string;
 };
 
-export type Style = FillStyle & StrokeStyle;
+export type ShapeStyle = FillStyle & StrokeStyle;
+
+export type Layer = { id: string; name: string };
 
 export type Rectangle = FillStyle &
   StrokeStyle & { type: "rectangle"; posX: number; posY: number; width: number; height: number };
@@ -31,16 +31,10 @@ export type ShapeInstance<TShape extends Shape> = {
 
 export type StateShape = ShapeInstance<Rectangle> | ShapeInstance<Circle> | ShapeInstance<PolyLine>;
 
-export type State = {
+export type CanvasState = {
+  mousePosition: { x: number; y: number };
   backgroundColor: string;
   layerOrder: string[];
   layers: Layer[];
   shapes: StateShape[];
 };
-
-export type Ref = { id: string | null };
-
-export interface RefRegistry {
-  get(name: string): Ref;
-  remove(name: string): void;
-}
