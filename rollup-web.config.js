@@ -13,9 +13,9 @@ const reduxToolkitESM = new RegExp(
 );
 
 export default {
-  input: "./build/web/app.js",
+  input: "./build/dist/web/app.js",
   output: {
-    file: "./build/web/public/bundle.js",
+    file: "./build/dist/web/public/bundle.js",
     format: "cjs"
   },
   plugins: [

@@ -2,10 +2,10 @@ import express from "express";
 import path from "path";
 import url from "url";
 
+import { StartServerOptions } from "./server.type";
+
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-import { StartServerOptions } from "./server.type";
 
 export const startServer = (options?: StartServerOptions) => {
   const port = options?.port || 3000;
