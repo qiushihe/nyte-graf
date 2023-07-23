@@ -10,7 +10,7 @@ import { addPolyLine } from "~nyte-graf-web/redux/action/shapes";
 import { updateShapeStyle } from "~nyte-graf-web/redux/action/shapes";
 import { createStore } from "~nyte-graf-web/redux/store";
 
-const with30Fps = debounce(1000 / 60);
+const with30Fps = debounce(1000 / 30);
 
 const with60Fps = debounce(1000 / 60);
 
