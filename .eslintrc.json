@@ -2,10 +2,12 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
     "plugin:prettier/recommended"
   ],
   "plugins": [
-    "@typescript-eslint", "prettier", "simple-import-sort"
+    "@typescript-eslint", "prettier", "react", "simple-import-sort"
   ],
   "rules": {
     "prettier/prettier": "error",
@@ -16,7 +18,7 @@
   },
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": ["*.ts", "*.tsx"],
       "rules": {
         "simple-import-sort/imports": [
           "error",
@@ -43,6 +45,12 @@
     }
   ],
   "env": {
-    "node": true
+    "node": true,
+    "browser": true
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   }
 }

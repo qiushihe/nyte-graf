@@ -1,18 +1,19 @@
 {
   "name": "nyte-graf",
   "compilerOptions": {
-    "module": "ESNext",
-    "target": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "baseUrl": "./",
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "paths": {
       "~nyte-graf-core/*": ["src/core/*"],
       "~nyte-graf-block/*": ["src/block/*"],
       "~nyte-graf-web/*": ["src/web/*"]
-    }
+    },
+    "skipLibCheck": true,
+    "target": "ESNext",
   },
   "tsc-alias": {
     "resolveFullPaths": true

@@ -23,7 +23,7 @@ export default {
       preventAssignment: true,
       "process.env.NODE_ENV": JSON.stringify("development")
     }),
-    nodeResolve({ preferBuiltins: true }),
+    nodeResolve({ browser: true, preferBuiltins: true }),
     commonjs(),
     json()
   ],
@@ -39,5 +39,6 @@ export default {
     if (shouldHandle) {
       defaultHandler(warning);
     }
-  }
+  },
+  external: ["canvas"]
 };
