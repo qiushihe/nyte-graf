@@ -1,22 +1,17 @@
 import debounce from "lodash/fp/debounce";
 import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Group, Layer, Stage, Text } from "react-konva";
+import { Layer, Stage } from "react-konva";
 
 import { Arrange } from "~nyte-graf-web/component/arrange";
+import { Block } from "~nyte-graf-web/component/block";
+import { DraggableController } from "~nyte-graf-web/component/draggable-controller";
 import { Placeholder } from "~nyte-graf-web/component/placeholder";
 
-type AppProps = {
-  rootElementId: string;
-};
+import { AppProps } from "./app.type";
 
 const App: React.FC<AppProps> = ({ rootElementId }) => {
   const [stageSize, setStageSize] = useState<{ width: number; height: number } | null>(null);
-  const [dndState, setDnDState] = useState<{ isDragging: boolean; x: number; y: number }>({
-    isDragging: false,
-    x: 0,
-    y: 300
-  });
 
   const handleWindowResize = useCallback(() => {
     const rootElement = document.getElementById(rootElementId);
@@ -75,33 +70,18 @@ const App: React.FC<AppProps> = ({ rootElementId }) => {
             }
           ]}
         </Arrange>
-        <Group
-          draggable
-          x={dndState.x}
-          y={dndState.y}
-          onDragStart={() => {
-            setDnDState({
-              ...dndState,
-              isDragging: true
-            });
-          }}
-          onDragEnd={(evt) => {
-            setDnDState({
-              ...dndState,
-              isDragging: false,
-              x: evt.target.x(),
-              y: evt.target.y()
-            });
-          }}
-        >
-          <Text x={0} y={50} text="Draggable Text" fill={dndState.isDragging ? "green" : "black"} />
-          <Text
-            x={0}
-            y={100}
-            text="Some other text in the same group"
-            fill={dndState.isDragging ? "black" : "green"}
-          />
-        </Group>
+        <DraggableController initialX={0} initialY={300}>
+          {({ x, y, isDragging, onDragStart, onDragEnd }) => (
+            <Block
+              x={x}
+              y={y}
+              isDraggable={true}
+              isDragging={isDragging}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+            />
+          )}
+        </DraggableController>
       </Layer>
     </Stage>
   );
