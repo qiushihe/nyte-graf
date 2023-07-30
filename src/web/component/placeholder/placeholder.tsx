@@ -16,7 +16,5 @@ export const Placeholder: React.FC<PlaceholderProps> = ({ x, y, width, height })
     setColor(Konva.Util.getRandomColor());
   };
 
-  return (
-    <Rect x={x} y={y} width={width} height={height} fill={color} onClick={handleClick} />
-  );
+  return <Rect x={x} y={y} width={width} height={height} fill={color} onClick={handleClick} />;
 };

@@ -1,10 +1,13 @@
-import Konva from "konva";
-
 export type BlockProps = {
   x: number;
   y: number;
-  isDragging?: boolean;
+  width: number;
+  height: number;
+  onClick?: () => void;
+  isSelected?: boolean;
   isDraggable?: boolean;
-  onDragStart?: (evt: Konva.KonvaEventObject<DragEvent>) => void;
-  onDragEnd?: (evt: Konva.KonvaEventObject<DragEvent>) => void;
+  isDragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: (x: number, y: number) => void;
+  onResized?: (width: number, height: number) => void;
 };
