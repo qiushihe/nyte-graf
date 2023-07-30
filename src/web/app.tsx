@@ -1,5 +1,5 @@
 import debounce from "lodash/fp/debounce";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Layer, Stage } from "react-konva";
 
@@ -8,21 +8,23 @@ import { Arrange } from "~nyte-graf-web/component/arrange";
 import { BlockInstance } from "~nyte-graf-web/component/block-instance";
 import { DimensionableProvider } from "~nyte-graf-web/component/dimensionable-provider";
 import { useDimensionable } from "~nyte-graf-web/component/dimensionable-provider";
+import { InstantiableProvider } from "~nyte-graf-web/component/instantiable-provider";
+import { useInstantiable } from "~nyte-graf-web/component/instantiable-provider";
 import { Placeholder } from "~nyte-graf-web/component/placeholder";
 import { PositionableProvider } from "~nyte-graf-web/component/positionable-provider";
 import { usePositionable } from "~nyte-graf-web/component/positionable-provider";
 import { SelectableProvider } from "~nyte-graf-web/component/selectable-provider";
 import { useSelectable } from "~nyte-graf-web/component/selectable-provider";
+import { withContainers } from "~nyte-graf-web/util/render";
 
 import { AppProps } from "./app.type";
 
 const App: React.FC<AppProps> = ({ rootElementId }) => {
   const [stageSize, setStageSize] = useState<{ width: number; height: number } | null>(null);
-  const boxIdRef = useRef("tmp-box");
-  const [boxReady, setBoxReady] = useState(false);
   const { setDimension } = useDimensionable();
   const { setPosition } = usePositionable();
   const { deselectAll } = useSelectable();
+  const { addInstance, getInstanceIds } = useInstantiable();
 
   const handleWindowResize = useCallback(() => {
     const rootElement = document.getElementById(rootElementId);
@@ -39,9 +41,9 @@ const App: React.FC<AppProps> = ({ rootElementId }) => {
   }, [handleWindowResize]);
 
   useOnceEffect(() => {
-    setDimension(boxIdRef.current, 300, 300);
-    setPosition(boxIdRef.current, 50, 300);
-    setBoxReady(true);
+    addInstance("block", "tmp-box");
+    setDimension("tmp-box", 300, 300);
+    setPosition("tmp-box", 50, 300);
   });
 
   if (!stageSize) {
@@ -92,7 +94,9 @@ const App: React.FC<AppProps> = ({ rootElementId }) => {
             }
           ]}
         </Arrange>
-        {boxReady && <BlockInstance id={boxIdRef.current} isDraggable={true} />}
+        {getInstanceIds("block").map((blockId) => (
+          <BlockInstance key={blockId} id={blockId} isDraggable={true} />
+        ))}
       </Layer>
     </Stage>
   );
@@ -102,16 +106,16 @@ type RenderAppOptions = {
   rootElementId: string;
 };
 
-const renderApp = (options: RenderAppOptions) => {
+const withAppContainers = withContainers([
+  [InstantiableProvider],
+  [SelectableProvider],
+  [PositionableProvider],
+  [DimensionableProvider]
+]);
+
+const renderApp = (options: RenderAppOptions) =>
   createRoot(document.getElementById(options.rootElementId)).render(
-    <SelectableProvider>
-      <PositionableProvider>
-        <DimensionableProvider>
-          <App rootElementId={options.rootElementId} />
-        </DimensionableProvider>
-      </PositionableProvider>
-    </SelectableProvider>
+    withAppContainers(<App rootElementId={options.rootElementId} />)
   );
-};
 
 renderApp({ rootElementId: "nyte-graf-root" });
