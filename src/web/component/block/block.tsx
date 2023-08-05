@@ -23,13 +23,13 @@ export const Block: React.FC<BlockProps> = ({
   onResizeEnd,
   onResize
 }) => {
-  const shapeRef = useRef<Konva.Rect>();
-  const trRef = useRef<Konva.Transformer>();
+  const outlineRectRef = useRef<Konva.Rect>();
+  const transformerRef = useRef<Konva.Transformer>();
 
   useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer().batchDraw();
+    if (isSelected && transformerRef.current && outlineRectRef.current) {
+      transformerRef.current.nodes([outlineRectRef.current]);
+      transformerRef.current.getLayer().batchDraw();
     }
   }, [isSelected]);
 
@@ -63,7 +63,7 @@ export const Block: React.FC<BlockProps> = ({
               all wonky while the `Transformer` component is doing its
               things. */}
           <Rect
-            ref={shapeRef}
+            ref={outlineRectRef}
             x={0}
             y={0}
             width={width}
@@ -98,7 +98,7 @@ export const Block: React.FC<BlockProps> = ({
             }}
           />
           <Transformer
-            ref={trRef}
+            ref={transformerRef}
             boundBoxFunc={(oldBox, newBox) => {
               // limit resize
               if (newBox.width < 5 || newBox.height < 5) {
