@@ -5,36 +5,36 @@ import React, { useCallback, useState } from "react";
 import { uniqueOrderedStrings } from "~nyte-graf-core/util/array";
 
 import { positionableContext } from "./positionable-provider.context";
-import { DragStart } from "./positionable-provider.context";
-import { DragEnd } from "./positionable-provider.context";
-import { IsDragging } from "./positionable-provider.context";
+import { MoveStart } from "./positionable-provider.context";
+import { MoveEnd } from "./positionable-provider.context";
+import { IsMoving } from "./positionable-provider.context";
 import { GetPosition } from "./positionable-provider.context";
 import { SetPosition } from "./positionable-provider.context";
 import { PositionableProviderProps } from "./positionable-provider.type";
 
 export const PositionableProvider: React.FC<PositionableProviderProps> = ({ children }) => {
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
-  const [draggingIds, setDraggingIds] = useState<string[]>([]);
+  const [movingIds, setMovingIds] = useState<string[]>([]);
 
-  const handleDragStart = useCallback<DragStart>(
+  const handleMoveStart = useCallback<MoveStart>(
     (id) => {
-      setDraggingIds(uniqueOrderedStrings([...draggingIds, id]));
+      setMovingIds(uniqueOrderedStrings([...movingIds, id]));
     },
-    [draggingIds]
+    [movingIds]
   );
 
-  const handleDragEnd = useCallback<DragEnd>(
+  const handleMoveEnd = useCallback<MoveEnd>(
     (id) => {
-      setDraggingIds(difference(draggingIds)([id]));
+      setMovingIds(difference(movingIds)([id]));
     },
-    [draggingIds]
+    [movingIds]
   );
 
-  const handleIsDragging = useCallback<IsDragging>(
+  const handleIsMoving = useCallback<IsMoving>(
     (id) => {
-      return includes(id)(draggingIds);
+      return includes(id)(movingIds);
     },
-    [draggingIds]
+    [movingIds]
   );
 
   const handleGetPosition = useCallback<GetPosition>(
@@ -51,15 +51,17 @@ export const PositionableProvider: React.FC<PositionableProviderProps> = ({ chil
     [positions]
   );
 
-  const providerValue = {
-    dragStart: handleDragStart,
-    dragEnd: handleDragEnd,
-    isDragging: handleIsDragging,
-    getPosition: handleGetPosition,
-    setPosition: handleSetPosition
-  } as const;
-
   return (
-    <positionableContext.Provider value={providerValue}>{children}</positionableContext.Provider>
+    <positionableContext.Provider
+      value={{
+        moveStart: handleMoveStart,
+        moveEnd: handleMoveEnd,
+        isMoving: handleIsMoving,
+        getPosition: handleGetPosition,
+        setPosition: handleSetPosition
+      }}
+    >
+      {children}
+    </positionableContext.Provider>
   );
 };

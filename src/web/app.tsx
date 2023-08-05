@@ -95,7 +95,7 @@ const App: React.FC<AppProps> = ({ rootElementId }) => {
           ]}
         </Arrange>
         {getInstanceIds("block").map((blockId) => (
-          <BlockInstance key={blockId} id={blockId} isDraggable={true} />
+          <BlockInstance key={blockId} id={blockId} isMovable={true} isResizable={true} />
         ))}
       </Layer>
     </Stage>

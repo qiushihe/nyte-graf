@@ -7,14 +7,13 @@ import { useSelectable } from "~nyte-graf-web/component/selectable-provider";
 
 import { BlockInstanceProps } from "./block-instance.type";
 
-export const BlockInstance: React.FC<BlockInstanceProps> = ({ id, isDraggable }) => {
+export const BlockInstance: React.FC<BlockInstanceProps> = ({ id, isMovable, isResizable }) => {
   const { select, deselect, isSelected } = useSelectable();
-  const { dragStart, dragEnd, isDragging, getPosition, setPosition } = usePositionable();
-  const { getDimension, setDimension } = useDimensionable();
+  const { moveStart, moveEnd, isMoving, getPosition, setPosition } = usePositionable();
+  const { resizeStart, resizeEnd, isResizing, getDimension, setDimension } = useDimensionable();
 
-  const position = getPosition(id);
   const selected = isSelected(id);
-  const dragging = isDragging(id);
+  const position = getPosition(id);
   const dimension = getDimension(id);
 
   const handleBlockClick = useCallback(() => {
@@ -33,14 +32,16 @@ export const BlockInstance: React.FC<BlockInstanceProps> = ({ id, isDraggable })
       height={dimension.height}
       onClick={handleBlockClick}
       isSelected={selected}
-      isDraggable={isDraggable}
-      isDragging={dragging}
-      onDragStart={() => dragStart(id)}
-      onDragEnd={(x, y) => {
-        dragEnd(id);
-        setPosition(id, x, y);
-      }}
-      onResized={(width, height) => setDimension(id, width, height)}
+      isMovable={isMovable}
+      isMoving={isMoving(id)}
+      onMoveStart={() => moveStart(id)}
+      onMoveEnd={() => moveEnd(id)}
+      onMove={(x, y) => setPosition(id, x, y)}
+      isResizable={isResizable}
+      isResizing={isResizing(id)}
+      onResizeStart={() => resizeStart(id)}
+      onResizeEnd={() => resizeEnd(id)}
+      onResize={(width, height) => setDimension(id, width, height)}
     />
   );
 };

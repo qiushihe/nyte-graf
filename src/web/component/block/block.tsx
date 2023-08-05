@@ -12,14 +12,19 @@ export const Block: React.FC<BlockProps> = ({
   height,
   onClick,
   isSelected,
-  isDraggable,
-  isDragging,
-  onDragStart,
-  onDragEnd,
-  onResized
+  isMovable,
+  isMoving,
+  onMoveStart,
+  onMove,
+  onMoveEnd,
+  isResizable,
+  isResizing,
+  onResizeStart,
+  onResizeEnd,
+  onResize
 }) => {
-  const shapeRef = useRef<any>();
-  const trRef = useRef<any>();
+  const shapeRef = useRef<Konva.Rect>();
+  const trRef = useRef<Konva.Transformer>();
 
   useEffect(() => {
     if (isSelected && trRef.current && shapeRef.current) {
@@ -40,15 +45,23 @@ export const Block: React.FC<BlockProps> = ({
     <Group
       x={x}
       y={y}
-      draggable={isDraggable}
-      onDragStart={isDraggable ? () => onDragStart() : () => {}}
-      onDragEnd={isDraggable ? (evt) => onDragEnd(evt.target.x(), evt.target.y()) : () => {}}
+      draggable={isMovable}
+      onDragStart={isMovable ? () => onMoveStart?.() : () => {}}
+      onDragMove={isMovable ? (evt) => onMove?.(evt.target.x(), evt.target.y()) : () => {}}
+      onDragEnd={isMovable ? () => onMoveEnd?.() : () => {}}
     >
       <Rect x={0} y={0} width={width} height={height} stroke="#000000" onClick={handleClick} />
-      <Text x={0} y={50} text="[BLOCK TITLE]" fill={isDragging ? "green" : "black"} />
-      <Text x={0} y={100} text="[Block Body]" fill={isDragging ? "black" : "green"} />
-      {isSelected && (
+      <Text x={0} y={50} text="[BLOCK TITLE]" fill={isMoving || isResizing ? "green" : "black"} />
+      <Text x={0} y={100} text="[Block Body]" fill={isMoving || isResizing ? "black" : "green"} />
+      {isSelected && isResizable && (
         <>
+          {/* The `Transformer` component is designed to manipulate the *scale*
+              of a shep and not it's *dimension*. But manipulating the shape's
+              dimension is exactly what we want to do.
+              So here we use a fake "outline" rectangle for `Transformer` to
+              manipulate, so the actual `Block` component's shapes wont look
+              all wonky while the `Transformer` component is doing its
+              things. */}
           <Rect
             ref={shapeRef}
             x={0}
@@ -57,22 +70,31 @@ export const Block: React.FC<BlockProps> = ({
             height={height}
             stroke="#990000"
             onClick={handleClick}
-            onTransformEnd={() => {
-              // transformer is changing scale of the node
-              // and NOT its width or height
-              // but in the store we have only width and height
-              // to match the data better we will reset scale on transform end
-              const node = shapeRef.current;
-              const scaleX = node.scaleX();
-              const scaleY = node.scaleY();
+            onTransformStart={() => onResizeStart?.()}
+            onTransform={(evt) => {
+              // console.log("onTransform", evt.target.width(), evt.target.scaleX());
 
-              // we will reset it back
-              node.scaleX(1);
-              node.scaleY(1);
-
-              // node.x()
-              // node.y()
-              onResized?.(node.width() * scaleX, node.height() * scaleY);
+              // The `Transformer` component is designed to manipulate the
+              // *scale* of a shep and not it's *dimension*. But manipulating
+              // the shape's dimension is exactly what we want to do.
+              // So while the `Transformer` component is in the process of
+              // transforming the outline rectangle, we use some calculate the
+              // effective dimensional change and apply it to the `Block`
+              // component's `onResized` callback.
+              onResize?.(
+                evt.target.width() * evt.target.scaleX(),
+                evt.target.height() * evt.target.scaleY()
+              );
+            }}
+            onTransformEnd={(evt) => {
+              // The `Transformer` component is designed to manipulate the
+              // *scale* of a shep and not it's *dimension*. But manipulating
+              // the shape's dimension is exactly what we want to do.
+              // So upon the end of the transformation process, we have to
+              // reset the scaling of the outline rectangle.
+              evt.target.scaleX(1);
+              evt.target.scaleY(1);
+              onResizeEnd?.();
             }}
           />
           <Transformer

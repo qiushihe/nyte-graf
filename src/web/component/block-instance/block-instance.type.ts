@@ -1,4 +1,5 @@
 export type BlockInstanceProps = {
   id: string;
-  isDraggable: boolean;
+  isMovable: boolean;
+  isResizable: boolean;
 };
