@@ -1,5 +1,5 @@
 import omit from "lodash/fp/omit";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { instantiableContext } from "./instantiable-provider.context";
 import { AddInstance } from "./instantiable-provider.context";
@@ -11,30 +11,25 @@ import { InstantiableProviderProps } from "./instantiable-provider.type";
 export const InstantiableProvider: React.FC<InstantiableProviderProps> = ({ children }) => {
   const [idsByType, setIdsByType] = useState<Record<string, Record<string, string>>>({});
 
-  const handleAddInstance = useCallback<AddInstance>(
-    (type, id) => {
-      setIdsByType({ ...idsByType, [type]: { ...(idsByType[type] || {}), [id]: id } });
-    },
-    [idsByType]
-  );
+  const handleAddInstance: AddInstance = (type, id) => {
+    setIdsByType((state) => {
+      return { ...state, [type]: { ...(state[type] || {}), [id]: id } };
+    });
+  };
 
-  const handleRemoveInstance = useCallback<RemoveInstance>(
-    (type, id) => {
-      setIdsByType({ ...idsByType, [type]: omit([id])({ ...(idsByType[type] || {}) }) });
-    },
-    [idsByType]
-  );
+  const handleRemoveInstance: RemoveInstance = (type, id) => {
+    setIdsByType((state) => {
+      return { ...state, [type]: omit([id])({ ...(state[type] || {}) }) };
+    });
+  };
 
-  const handleGetInstanceTypes = useCallback<GetInstanceTypes>(() => {
+  const handleGetInstanceTypes: GetInstanceTypes = () => {
     return Object.keys(idsByType);
-  }, [idsByType]);
+  };
 
-  const handleGetInstanceIds = useCallback<GetInstanceIds>(
-    (type) => {
-      return Object.keys(idsByType[type] || {});
-    },
-    [idsByType]
-  );
+  const handleGetInstanceIds: GetInstanceIds = (type) => {
+    return Object.keys(idsByType[type] || {});
+  };
 
   const providerValue = {
     addInstance: handleAddInstance,

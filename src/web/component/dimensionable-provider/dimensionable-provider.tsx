@@ -1,6 +1,6 @@
 import difference from "lodash/fp/difference";
 import includes from "lodash/fp/includes";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { uniqueOrderedStrings } from "~nyte-graf-core/util/array";
 
@@ -18,40 +18,31 @@ export const DimensionableProvider: React.FC<DimensionableProviderProps> = ({ ch
   );
   const [resizingIds, setResizingIds] = useState<string[]>([]);
 
-  const handleResizeStart = useCallback<ResizeStart>(
-    (id) => {
-      setResizingIds(uniqueOrderedStrings([...resizingIds, id]));
-    },
-    [resizingIds]
-  );
+  const handleResizeStart: ResizeStart = (id) => {
+    setResizingIds((state) => {
+      return uniqueOrderedStrings([...state, id]);
+    });
+  };
 
-  const handleResizeEnd = useCallback<ResizeEnd>(
-    (id) => {
-      setResizingIds(difference(resizingIds)([id]));
-    },
-    [resizingIds]
-  );
+  const handleResizeEnd: ResizeEnd = (id) => {
+    setResizingIds((state) => {
+      return difference(state)([id]);
+    });
+  };
 
-  const handleIsResizing = useCallback<IsResizing>(
-    (id) => {
-      return includes(id)(resizingIds);
-    },
-    [resizingIds]
-  );
+  const handleIsResizing: IsResizing = (id) => {
+    return includes(id)(resizingIds);
+  };
 
-  const handleSetDimension = useCallback<SetDimension>(
-    (id, width, height) => {
-      setDimensions({ ...dimensions, [id]: { width, height } });
-    },
-    [dimensions]
-  );
+  const handleSetDimension: SetDimension = (id, width, height) => {
+    setDimensions((state) => {
+      return { ...state, [id]: { width, height } };
+    });
+  };
 
-  const handleGetDimension = useCallback<GetDimension>(
-    (id) => {
-      return dimensions[id] || { width: 50, height: 50 };
-    },
-    [dimensions]
-  );
+  const handleGetDimension: GetDimension = (id) => {
+    return dimensions[id] || { width: 50, height: 50 };
+  };
 
   return (
     <dimensionableContext.Provider

@@ -41,9 +41,13 @@ const App: React.FC<AppProps> = ({ rootElementId }) => {
   }, [handleWindowResize]);
 
   useOnceEffect(() => {
-    addInstance("block", "tmp-box");
-    setDimension("tmp-box", 300, 300);
-    setPosition("tmp-box", 50, 300);
+    addInstance("block", "tmp-box-1");
+    setDimension("tmp-box-1", 300, 300);
+    setPosition("tmp-box-1", 50, 300);
+
+    addInstance("block", "tmp-box-2");
+    setDimension("tmp-box-2", 300, 300);
+    setPosition("tmp-box-2", 600, 400);
   });
 
   if (!stageSize) {

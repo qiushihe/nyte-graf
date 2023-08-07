@@ -1,6 +1,6 @@
 import difference from "lodash/fp/difference";
 import includes from "lodash/fp/includes";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { uniqueOrderedStrings } from "~nyte-graf-core/util/array";
 
@@ -16,40 +16,31 @@ export const PositionableProvider: React.FC<PositionableProviderProps> = ({ chil
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [movingIds, setMovingIds] = useState<string[]>([]);
 
-  const handleMoveStart = useCallback<MoveStart>(
-    (id) => {
-      setMovingIds(uniqueOrderedStrings([...movingIds, id]));
-    },
-    [movingIds]
-  );
+  const handleMoveStart: MoveStart = (id) => {
+    setMovingIds((state) => {
+      return uniqueOrderedStrings([...state, id]);
+    });
+  };
 
-  const handleMoveEnd = useCallback<MoveEnd>(
-    (id) => {
-      setMovingIds(difference(movingIds)([id]));
-    },
-    [movingIds]
-  );
+  const handleMoveEnd: MoveEnd = (id) => {
+    setMovingIds((state) => {
+      return difference(state)([id]);
+    });
+  };
 
-  const handleIsMoving = useCallback<IsMoving>(
-    (id) => {
-      return includes(id)(movingIds);
-    },
-    [movingIds]
-  );
+  const handleIsMoving: IsMoving = (id) => {
+    return includes(id)(movingIds);
+  };
 
-  const handleGetPosition = useCallback<GetPosition>(
-    (id) => {
-      return positions[id] || { x: 0, y: 0 };
-    },
-    [positions]
-  );
+  const handleGetPosition: GetPosition = (id) => {
+    return positions[id] || { x: 0, y: 0 };
+  };
 
-  const handleSetPosition = useCallback<SetPosition>(
-    (id, x, y) => {
-      setPositions({ ...positions, [id]: { x, y } });
-    },
-    [positions]
-  );
+  const handleSetPosition: SetPosition = (id, x, y) => {
+    setPositions((state) => {
+      return { ...state, [id]: { x, y } };
+    });
+  };
 
   return (
     <positionableContext.Provider

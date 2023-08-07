@@ -1,6 +1,6 @@
 import difference from "lodash/fp/difference";
 import includes from "lodash/fp/includes";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { uniqueOrderedStrings } from "~nyte-graf-core/util/array";
 
@@ -14,30 +14,25 @@ import { SelectableProviderProps } from "./selectable-provider.type";
 export const SelectableProvider: React.FC<SelectableProviderProps> = ({ children }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const handleSelect = useCallback<Select>(
-    (id) => {
-      setSelectedIds(uniqueOrderedStrings([...selectedIds, id]));
-    },
-    [selectedIds]
-  );
+  const handleSelect: Select = (id) => {
+    setSelectedIds((state) => {
+      return uniqueOrderedStrings([...state, id]);
+    });
+  };
 
-  const handleDeselect = useCallback<Deselect>(
-    (id) => {
-      setSelectedIds(difference(selectedIds)([id]));
-    },
-    [selectedIds]
-  );
+  const handleDeselect: Deselect = (id) => {
+    setSelectedIds((state) => {
+      return difference(state)([id]);
+    });
+  };
 
-  const handleDeselectAll = useCallback<DeselectAll>(() => {
-    setSelectedIds([]);
-  }, []);
+  const handleDeselectAll: DeselectAll = () => {
+    setSelectedIds(() => []);
+  };
 
-  const handleIsSelected = useCallback<IsSelected>(
-    (id) => {
-      return includes(id)(selectedIds);
-    },
-    [selectedIds]
-  );
+  const handleIsSelected: IsSelected = (id) => {
+    return includes(id)(selectedIds);
+  };
 
   const providerValue = {
     select: handleSelect,
